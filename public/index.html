@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>erlume · AI Bag Pricing</title>
+<link rel="icon" type="image/png" href="/erlume-logo.png">
+<style>
+  :root {
+    /* raw erlume tokens (matches erlume_pre_launch design system) — H S% L% */
+    --deep-green: 120 15% 8%;      /* very dark green, almost black */
+    --forest-green: 120 25% 35%;   /* muted medium forest green */
+    --terracotta-raw: 15 25% 45%;  /* warm reddish-brown */
+    --blush: 350 25% 85%;          /* soft light pink */
+    --warm-beige: 45 25% 92%;      /* light warm beige */
+
+    /* semantic vars used throughout the tool */
+    --cream: #ffffff;                       /* page background = white (pre-launch) */
+    --card: #ffffff;
+    --charcoal: hsl(var(--deep-green));     /* primary text (near-black) */
+    --charcoal-soft: hsl(120 8% 42%);       /* muted text = balanced neutral gray-green */
+    --gold: hsl(var(--deep-green));         /* PRIMARY buttons/accents = deep green */
+    --gold-dark: hsl(120 15% 15%);          /* primary hover (primary-glow) */
+    --gold-light: hsl(var(--blush));        /* subtle highlight / active */
+    --terracotta: hsl(var(--terracotta-raw));
+    --line: hsl(15 25% 90%);                /* warm light border */
+    --input-bg: hsl(45 25% 95%);
+    --green: hsl(120 25% 35%);              /* accept = forest green */
+    --green-bg: hsl(120 25% 94%);
+    --red: hsl(0 84% 60%);                  /* decline / destructive */
+    --red-bg: hsl(0 84% 97%);
+    --warm: hsl(var(--warm-beige));
+    --radius-card: 1rem;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0 0 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    line-height: 1.5;
+  }
+
+  /* ---- Navbar ---- */
+  .navbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.9); backdrop-filter: saturate(180%) blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    max-width: 1120px; margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo { height: 30px; width: auto; }
+  .nav-brand span { font-size: 1.25rem; font-weight: 700; color: var(--charcoal); letter-spacing: -0.01em; }
+  .del-btn {
+    background: transparent; border: none; cursor: pointer; font-size: 0.95rem;
+    padding: 4px 6px; border-radius: 6px; opacity: 0.55; transition: all 0.15s;
+  }
+  .del-btn:hover { opacity: 1; background: var(--red-bg); }
+  .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-link {
+    font-family: inherit; font-size: 0.88rem; cursor: pointer;
+    padding: 8px 16px; border-radius: 999px; border: 1px solid transparent;
+    background: transparent; color: var(--charcoal-soft); transition: all 0.15s;
+  }
+  .nav-link:hover { background: var(--warm); color: var(--charcoal); }
+  .nav-link.active { background: var(--gold); color: #fff; font-weight: 600; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 60px; }
+
+  /* ---- Footer ---- */
+  .site-footer {
+    border-top: 1px solid var(--line); background: #fff;
+    padding: 28px 24px; margin-top: 20px;
+  }
+  .footer-inner {
+    max-width: 1120px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .footer-brand { display: flex; align-items: center; gap: 10px; }
+  .footer-brand img { height: 22px; }
+  .footer-brand span { font-weight: 700; color: var(--charcoal); }
+  .footer-note { font-size: 0.8rem; color: var(--charcoal-soft); }
+
+  /* ---- Modern modal (SweetAlert-style) ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(17,23,17,0.45); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s ease;
+  }
+  .modal-overlay.show { opacity: 1; }
+  .modal-box {
+    background: #fff; border-radius: 1.25rem; padding: 30px 32px;
+    max-width: 400px; width: 90%; text-align: center;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.22);
+    transform: scale(0.9) translateY(8px); transition: transform 0.22s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
+  .modal-icon {
+    width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 18px;
+    display: flex; align-items: center; justify-content: center; font-size: 30px;
+  }
+  .modal-icon.warning { background: hsl(28 50% 93%); }
+  .modal-icon.success { background: var(--green-bg); }
+  .modal-icon.error { background: var(--red-bg); }
+  .modal-title { font-size: 1.25rem; font-weight: 700; margin: 0 0 8px; color: var(--charcoal); }
+  .modal-text { font-size: 0.9rem; color: var(--charcoal-soft); margin: 0 0 24px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn {
+    padding: 11px 24px; border-radius: 12px; font-family: inherit;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid var(--line);
+    transition: all 0.15s;
+  }
+  .modal-btn.cancel { background: #fff; color: var(--charcoal-soft); }
+  .modal-btn.cancel:hover { background: var(--warm); }
+  .modal-btn.confirm { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .modal-btn.confirm:hover { background: var(--gold-dark); }
+  .modal-btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+  .modal-btn.danger:hover { filter: brightness(0.92); }
+
+  /* ---- Toasts ---- */
+  .toast-container { position: fixed; top: 76px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
+  .toast {
+    background: #fff; border-radius: 14px; padding: 13px 18px; min-width: 240px; max-width: 340px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.16); display: flex; align-items: center; gap: 12px;
+    font-size: 0.88rem; color: var(--charcoal); border-left: 4px solid var(--gold);
+    transform: translateX(130%); transition: transform 0.32s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.success { border-left-color: var(--green); }
+  .toast.error { border-left-color: var(--red); }
+  .toast-icon { font-size: 18px; flex-shrink: 0; }
+
+  header.site-header { text-align: center; margin-bottom: 40px; }
+
+  .brand-logo {
+    height: 64px; width: auto; display: block; margin: 0 auto 14px;
+  }
+
+  h1.brand {
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    color: var(--charcoal);
+  }
+
+  .subtitle {
+    color: var(--charcoal-soft);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+  .tabs {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .tab {
+    font-family: inherit; font-size: 0.9rem; cursor: pointer;
+    padding: 10px 20px; border-radius: 999px;
+    border: 1px solid var(--line); background: #fff; color: var(--charcoal-soft);
+    transition: all 0.15s;
+  }
+  .tab:hover { border-color: var(--gold-light); }
+  .tab.active { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
+
+  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 480px) { .cat-grid { grid-template-columns: 1fr; } }
+  .band {
+    display: flex; align-items: baseline; justify-content: center; gap: 8px;
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; margin: 4px 0 2px;
+  }
+  .band .lo, .band .hi { color: var(--charcoal-soft); font-size: 1.1rem; }
+  .band .arrow { color: var(--gold-light); }
+  .ai-reason {
+    background: var(--warm); border-left: 3px solid var(--gold);
+    padding: 10px 14px; border-radius: 6px; font-size: 0.83rem;
+    color: var(--charcoal-soft); font-style: italic; margin: 12px 0;
+  }
+  .factor-title {
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-size: 1rem; font-weight: 700; margin: 22px 0 10px; color: var(--charcoal);
+  }
+  #l-factors { overflow-x: auto; }
+  table.factor-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; white-space: nowrap; }
+  table.factor-table th, table.factor-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  table.factor-table th { color: var(--charcoal-soft); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  table.factor-table td.effect { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table.factor-table td.up { color: var(--green); }
+  table.factor-table td.down { color: var(--red); }
+  table.factor-table td.flat { color: var(--charcoal-soft); font-weight: normal; }
+  table.factor-table tr.combined td { border-top: 2px solid var(--charcoal); border-bottom: none; font-weight: 700; color: var(--charcoal); padding-top: 10px; }
+  table.factor-table tr.startrow td, table.factor-table tr.midrow td { color: var(--charcoal-soft); }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-card);
+    padding: 32px;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    border: 1px solid var(--line);
+  }
+
+  .card h2 {
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin: 0 0 22px;
+    color: var(--charcoal);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+  }
+
+  .field { margin-bottom: 20px; }
+
+  .field label.field-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--charcoal-soft);
+    margin-bottom: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .radio-group { display: flex; flex-direction: column; gap: 10px; }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    font-size: 0.92rem;
+  }
+
+  .radio-option:hover { border-color: var(--gold-light); }
+  .radio-option.active { border-color: var(--gold); background: var(--warm); }
+
+  .radio-option input[type="radio"] {
+    accent-color: var(--gold);
+    width: 16px; height: 16px; flex-shrink: 0;
+  }
+
+  input[type="number"], input[type="text"], input[type="file"], select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: var(--input-bg);
+    color: var(--charcoal);
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px hsl(var(--deep-green) / 0.15);
+  }
+
+  .hint { font-size: 0.78rem; color: var(--terracotta); margin-top: 6px; font-style: italic; }
+  .hint.muted { color: var(--charcoal-soft); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 480px) { .row-2 { grid-template-columns: 1fr; } }
+
+  .previews { display: flex; gap: 8px; margin-top: 10px; }
+  .previews img {
+    width: 76px; height: 76px; object-fit: cover;
+    border-radius: 10px; border: 1px solid var(--line);
+  }
+
+  .btn {
+    background: var(--gold);
+    border: 1px solid var(--gold);
+    color: #fff;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+  }
+  .btn:hover { background: var(--gold-dark); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .btn.ghost { background: #fff; color: var(--gold); }
+  .btn.ghost:hover { background: var(--gold); color: #fff; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; }
+  .search-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .search-btns button {
+    background: #fff;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+  }
+  .search-btns button:hover { background: var(--gold); color: #fff; }
+  .search-btns button.solid { background: var(--gold); color: #fff; font-weight: 600; }
+  .search-btns button.solid:hover { background: var(--gold-dark); }
+  .search-btns button:disabled { opacity: .55; cursor: wait; }
+
+  /* Identified bag box */
+  .id-box {
+    background: var(--warm);
+    border: 1px solid var(--gold-light);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.88rem;
+    color: var(--charcoal-soft);
+    margin-top: 12px;
+    display: none;
+  }
+  .id-box.show { display: block; }
+  .id-box .id-name { font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-size: 1.05rem; color: var(--charcoal); }
+  .id-box .conf {
+    display: inline-block; margin-left: 8px; padding: 2px 12px;
+    border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .conf.high { background: var(--green-bg); color: var(--green); }
+  .conf.medium { background: var(--warm); color: var(--gold); }
+  .conf.low { background: var(--red-bg); color: var(--red); }
+  .id-box .id-notes { font-size: 0.78rem; font-style: italic; margin-top: 6px; }
+
+  /* Comp listings */
+  .comp-item {
+    display: flex; gap: 12px; align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    background: #ffffff;
+    font-size: 0.85rem;
+  }
+  .comp-item img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+  .comp-item .c-title { line-height: 1.35; }
+  .comp-item .c-title a { color: var(--charcoal); }
+  .comp-item .c-note { font-size: 0.75rem; color: var(--charcoal-soft); font-style: italic; }
+  .comp-item .c-price {
+    margin-left: auto; text-align: right; white-space: nowrap;
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-size: 1.05rem; color: var(--gold);
+  }
+  .comp-item .c-price small { display: block; font-family: inherit; font-size: 0.7rem; color: var(--charcoal-soft); }
+
+  .toggle-note {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--warm);
+    border: 1px solid var(--gold-light);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: var(--charcoal-soft);
+    cursor: pointer;
+  }
+
+  .toggle-note input { margin-top: 3px; accent-color: var(--gold); }
+
+  .payment-detail {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--charcoal-soft);
+    background: var(--warm);
+    border-left: 3px solid var(--gold);
+    padding: 10px 14px;
+    border-radius: 6px;
+    display: none;
+  }
+  .payment-detail.show { display: block; }
+
+  /* Results card */
+  .results-card { position: sticky; top: 20px; }
+
+  .listing-hero {
+    text-align: center;
+    padding: 10px 0 26px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 22px;
+  }
+
+  .listing-hero .label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--charcoal-soft);
+    margin-bottom: 8px;
+  }
+
+  .listing-hero .amount {
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .listing-hero .amount small {
+    font-size: 1.4rem;
+    color: var(--charcoal-soft);
+    margin-left: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .badge.accept { background: var(--green-bg); color: var(--green); }
+  .badge.decline { background: var(--red-bg); color: var(--red); }
+
+  .breakdown { margin-bottom: 24px; }
+
+  .breakdown .brow {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    font-size: 0.9rem;
+    border-bottom: 1px dashed var(--line);
+  }
+  .breakdown .brow:last-child { border-bottom: none; }
+  .breakdown .brow .k { color: var(--charcoal-soft); }
+  .breakdown .brow .v { font-weight: 600; }
+
+  .breakdown .brow.total {
+    border-top: 2px solid var(--charcoal);
+    margin-top: 6px;
+    padding-top: 12px;
+    font-size: 1rem;
+  }
+  .breakdown .brow.total .k,
+  .breakdown .brow.total .v { color: var(--charcoal); font-weight: 700; }
+
+  .payout-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--warm);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 8px;
+  }
+  .payout-box .k { font-size: 0.85rem; color: var(--charcoal-soft); }
+  .payout-box .v { font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-size: 1.4rem; font-weight: 700; color: var(--charcoal); }
+
+  .commission-line {
+    font-size: 0.8rem;
+    color: var(--charcoal-soft);
+    text-align: right;
+    margin-bottom: 22px;
+  }
+
+  h3.section-title {
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 28px 0 14px;
+    color: var(--charcoal);
+  }
+
+  table.markdown-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  table.markdown-table th, table.markdown-table td {
+    text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--line);
+  }
+  table.markdown-table th:first-child, table.markdown-table td:first-child { text-align: left; }
+  table.markdown-table th {
+    color: var(--charcoal-soft); font-weight: 600; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .footnote {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--charcoal-soft);
+    font-style: italic;
+  }
+
+  .comp-note {
+    background: var(--green-bg);
+    border-left: 3px solid var(--green);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--charcoal-soft);
+    margin-top: 10px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .comp-note.show { display: block; }
+
+  .ultra-note {
+    background: var(--warm);
+    border-left: 3px solid var(--gold);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--charcoal-soft);
+    margin-top: 8px;
+    display: none;
+  }
+  .ultra-note.show { display: block; }
+
+  .error-note {
+    background: var(--red-bg);
+    border-left: 3px solid var(--red);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--red);
+    margin-top: 10px;
+    display: none;
+  }
+  .error-note.show { display: block; }
+
+  /* Price log */
+  .log-card { margin-top: 28px; }
+  table.log-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  table.log-table th, table.log-table td {
+    text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line);
+  }
+  table.log-table th {
+    color: var(--charcoal-soft); font-weight: 600; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  table.log-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.log-table th.num { text-align: right; }
+  .log-empty { font-size: 0.85rem; color: var(--charcoal-soft); font-style: italic; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/">
+      <img src="/erlume-logo.png" alt="erlume" class="nav-logo">
+    </a>
+    <div class="nav-links">
+      <button type="button" class="nav-link active" data-tab="consignment">Consignment</button>
+      <button type="button" class="nav-link" data-tab="listing">erlume Listing</button>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="site-header">
+    <h1 class="brand">AI Bag Pricing</h1>
+    <div class="subtitle">Pre-loved luxury, priced with precision — internal tool</div>
+  </header>
+
+  <div id="js-error-banner" style="display:none;max-width:1120px;margin:0 auto 16px;background:hsl(0 70% 96%);border:1px solid hsl(0 50% 80%);color:hsl(0 70% 40%);padding:10px 16px;border-radius:8px;font-size:0.85rem;"></div>
+
+  <div id="tab-consignment" class="tab-panel">
+  <div class="grid">
+
+    <!-- FORM CARD -->
+    <section class="card">
+      <h2>Item Details</h2>
+
+      <div class="field">
+        <label class="field-label">Photos (1–3) — let AI identify the bag</label>
+        <input type="file" id="photos" accept="image/jpeg,image/png,image/webp" multiple>
+        <div class="previews" id="previews"></div>
+        <div class="hint">A photo of the inside label / serial stamp dramatically improves identification.</div>
+        <div class="search-btns" style="margin-top:10px">
+          <button type="button" class="solid" id="btn-identify">Identify from photos</button>
+        </div>
+        <div class="id-box" id="id-box">
+          <span class="id-name" id="id-name"></span><span class="conf" id="id-conf"></span>
+          <div id="id-meta"></div>
+          <div class="id-notes" id="id-notes"></div>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Brand</label>
+          <input type="text" id="brand" placeholder="e.g. Gucci">
+        </div>
+        <div class="field">
+          <label class="field-label">Model</label>
+          <input type="text" id="model" placeholder="e.g. GG Marmont small">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Find the market price</label>
+        <input type="text" id="bagquery" placeholder="e.g. Gucci GG Marmont small shoulder bag">
+        <div class="search-btns">
+          <button type="button" class="solid" id="btn-comps">AI comps</button>
+          <button type="button" onclick="openBagSearch('ebay')">eBay sold prices</button>
+          <button type="button" onclick="openBagSearch('tlc')">The Luxury Closet</button>
+          <button type="button" onclick="openBagSearch('vestiaire')">Vestiaire</button>
+          <button type="button" onclick="openBagSearch('google')">Google</button>
+        </div>
+        <div class="hint muted">AI comps searches eBay and our own price log, then picks the 3 closest matches. Manual buttons open real listings — average 2–3 similar-condition prices and enter below as a resale comp.</div>
+        <div id="comps-list"></div>
+        <div class="hint" id="comps-median" style="display:none"></div>
+        <div class="error-note" id="comps-error"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Pricing basis</label>
+        <div class="radio-group">
+          <label class="radio-option active" id="opt-original">
+            <input type="radio" name="basis" value="original" checked>
+            <span>I know the original retail price</span>
+          </label>
+          <label class="radio-option" id="opt-comp">
+            <input type="radio" name="basis" value="comp">
+            <span>I have a resale comp price (a comparable used bag found online)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" id="price-label">Original retail price (KWD)</label>
+        <input type="number" id="price" min="0" step="0.5" value="400" placeholder="e.g. 400">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Brand tier</label>
+        <select id="tier">
+          <option value="ultra">Ultra-luxury (Hermès, Chanel, Louis Vuitton)</option>
+          <option value="premium" selected>Premium (Gucci, Prada, Dior, YSL)</option>
+          <option value="accessible">Accessible (Coach, Michael Kors, Kate Spade)</option>
+          <option value="highstreet">High-street & other</option>
+        </select>
+        <div class="ultra-note" id="ultra-note">Ultra-luxury bags (Chanel, Hermès…) often sell <b>above</b> their original retail price. Run AI comps or check a resale comp with the search buttons — if the comp is higher than the retail-based estimate, switch to "resale comp" and use the comp price instead.</div>
+      </div>
+
+      <div class="field" id="year-field">
+        <label class="field-label">Year purchased (optional)</label>
+        <input type="number" id="year" min="1980" max="2100" step="1" placeholder="e.g. 2023">
+        <div class="hint muted" id="year-hint">Leave blank if unknown → we'll assume 3–5 years old.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Condition</label>
+        <select id="condition">
+          <option value="like-new">Like New</option>
+          <option value="gently-used" selected>Gently Used</option>
+          <option value="fair-worn">Fair or Worn</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Pickup</label>
+        <select id="pickup">
+          <option value="0">Drop-off (free)</option>
+          <option value="3" selected>Pickup — own driver (+3 KWD)</option>
+          <option value="5">Pickup — 3rd party (+5 KWD)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Cleaning cost (KWD)</label>
+        <input type="number" id="cleaning" min="0" step="0.5" value="0">
+      </div>
+
+      <div class="field">
+        <label class="toggle-note" id="payment-toggle-label">
+          <input type="checkbox" id="payment-toggle">
+          <span>Payment method info (does not affect calculation)</span>
+        </label>
+        <div class="payment-detail" id="payment-detail">
+          INTERNAL ONLY — never shown to sellers or buyers as a "payment fee". The 2.5% "Logistics &amp; handling" line actually covers our MyFatoorah costs: KNET = flat 200 fils per transaction, Visa/Mastercard/Google Pay/Samsung Pay = 2.5%, Apple Pay KNET = 220 fils. It covers the worst case (cards); KNET sales cost far less, so the unused buffer becomes extra margin.
+        </div>
+      </div>
+
+      <div class="error-note" id="form-error"></div>
+    </section>
+
+    <!-- RESULTS CARD -->
+    <section class="card results-card">
+      <h2>Pricing Result</h2>
+
+      <div class="listing-hero">
+        <div class="label">Listing Price</div>
+        <div class="amount"><span id="listing-price">0.000</span><small>KWD</small></div>
+        <div id="accept-badge" class="badge accept">Accept — profitable</div>
+      </div>
+
+      <div class="comp-note" id="comp-note">
+        Using a resale comp price directly as market value — no retention curve or condition deduction is applied, since a comparable used listing already reflects real-world used condition and depreciation.
+      </div>
+
+      <div class="ultra-note" id="server-warning"></div>
+
+      <div class="breakdown">
+        <div class="brow"><span class="k">Estimated market value</span><span class="v" id="row-market">0.000</span></div>
+        <div class="brow"><span class="k">+ Pickup</span><span class="v" id="row-pickup">0.000</span></div>
+        <div class="brow"><span class="k">+ Cleaning</span><span class="v" id="row-cleaning">0.000</span></div>
+        <div class="brow"><span class="k">+ Logistics &amp; handling (2.5%)</span><span class="v" id="row-gateway">0.000</span></div>
+        <div class="brow total"><span class="k">= Listing price</span><span class="v" id="row-total">0.000</span></div>
+      </div>
+
+      <div class="payout-box">
+        <div><div class="k">Seller payout</div></div>
+        <div class="v" id="seller-payout">0.000 KWD</div>
+      </div>
+      <div class="commission-line">erlume commission: <span id="commission-amount">0.000</span> KWD (<span id="commission-pct">20</span>%, min <span id="commission-floor">10</span> KWD)</div>
+
+      <h3 class="section-title">Markdown Schedule (if unsold)</h3>
+      <table class="markdown-table">
+        <thead>
+          <tr>
+            <th>Timing</th>
+            <th>Discount</th>
+            <th>New listing</th>
+            <th>Commission</th>
+            <th>Payout</th>
+          </tr>
+        </thead>
+        <tbody id="markdown-body"></tbody>
+      </table>
+
+      <div class="search-btns" style="margin-top:20px">
+        <button type="button" class="solid" id="btn-save">Save to price log</button>
+      </div>
+      <div class="hint" id="save-msg"></div>
+    </section>
+
+  </div>
+  </div><!-- /tab-consignment -->
+
+  <!-- ================= erlume LISTING TAB (items we buy) ================= -->
+  <div id="tab-listing" class="tab-panel" style="display:none">
+    <div class="grid">
+      <section class="card">
+        <h2>Item Categorization</h2>
+
+        <div class="field">
+          <label class="field-label">Photos (1–3) — let AI identify the bag</label>
+          <input type="file" id="l-photos" accept="image/jpeg,image/png,image/webp" multiple>
+          <div class="previews" id="l-previews"></div>
+          <div class="hint">A photo of the inside label / serial stamp improves identification.</div>
+          <div class="search-btns" style="margin-top:10px">
+            <button type="button" class="solid" id="l-identify">Identify from photos</button>
+          </div>
+          <div class="id-box" id="l-idbox">
+            <span class="id-name" id="l-idname"></span><span class="conf" id="l-idconf"></span>
+            <div id="l-idmeta"></div>
+            <div class="id-notes" id="l-idnotes"></div>
+          </div>
+        </div>
+
+        <div class="cat-grid">
+          <div class="field"><label class="field-label">Brand</label><input type="text" id="l-brand" placeholder="e.g. Chanel"></div>
+          <div class="field"><label class="field-label">Model</label><input type="text" id="l-model" placeholder="e.g. Classic Flap"></div>
+        </div>
+        <div class="cat-grid">
+          <div class="field"><label class="field-label">Starting price (KWD)</label><input type="number" id="l-starting" min="0" step="0.5" placeholder="what we paid / base"></div>
+          <div class="field"><label class="field-label">Brand tier (weighted low)</label>
+            <select id="l-brandtier">
+              <option value="ultra">Ultra-luxury</option>
+              <option value="premium" selected>Premium</option>
+              <option value="accessible">Accessible</option>
+              <option value="highstreet">High-street</option>
+            </select>
+          </div>
+        </div>
+        <div class="cat-grid">
+          <div class="field"><label class="field-label">Rare</label>
+            <select id="l-rare"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
+          <div class="field"><label class="field-label">Vintage</label>
+            <select id="l-vintage"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
+        </div>
+        <div class="cat-grid">
+          <div class="field"><label class="field-label">Trendy</label>
+            <select id="l-trendy"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
+          <div class="field"><label class="field-label">Seasonal</label>
+            <select id="l-seasonal"><option value="n/a" selected>N/A</option><option value="in-season">In season</option><option value="off-season">Off season</option></select></div>
+        </div>
+        <div class="cat-grid">
+          <div class="field"><label class="field-label">Material (quality)</label>
+            <select id="l-material"><option value="premium">Premium</option><option value="standard" selected>Standard</option><option value="low">Low</option></select></div>
+          <div class="field"><label class="field-label">Condition</label>
+            <select id="l-condition"><option value="like-new">Like New</option><option value="gently-used" selected>Gently Used</option><option value="fair-worn">Fair or Worn</option></select></div>
+        </div>
+        <div class="cat-grid">
+          <div class="field"><label class="field-label">Delivery fee (KWD)</label><input type="number" id="l-delivery" min="0" step="0.5" value="0"></div>
+          <div class="field"><label class="field-label">Cleaning cost (KWD)</label><input type="number" id="l-cleaning" min="0" step="0.5" value="0"></div>
+        </div>
+        <div class="field"><label class="field-label">Comp average (KWD, optional)</label>
+          <input type="number" id="l-compavg" min="0" step="0.5" placeholder="informs where AI lands in the band">
+          <div class="search-btns" style="margin-top:8px">
+            <button type="button" class="solid" id="l-comps">AI comps → average</button>
+          </div>
+          <div id="l-complist"></div>
+          <div class="hint muted" id="l-comphint">Pulls eBay + your price log and averages the 3 closest, or type it manually.</div>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="btn" id="l-suggest">Suggest price (AI)</button>
+          <button type="button" class="btn ghost" id="l-calc">Calculate (formula only)</button>
+        </div>
+        <div class="hint muted">“Suggest” lets AI pick within the band and explain why. “Calculate” uses the formula midpoint — no AI, instant.</div>
+        <div class="error-note" id="l-error"></div>
+      </section>
+
+      <section class="card results-card">
+        <h2>Suggested Price</h2>
+        <div class="listing-hero">
+          <div class="label">Suggested listing price</div>
+          <div class="amount"><span id="l-listing">—</span><small>KWD</small></div>
+          <div id="l-badge" class="badge accept" style="display:none"></div>
+        </div>
+        <div class="band">
+          <span class="lo">band <span id="l-low">—</span></span>
+          <span class="arrow">→</span>
+          <span class="hi"><span id="l-high">—</span> KWD</span>
+        </div>
+        <div class="ai-reason" id="l-reason" style="display:none"></div>
+        <div class="field" id="l-finalwrap" style="display:none">
+          <label class="field-label">Final item value (KWD) — edit to override, price updates live</label>
+          <input type="number" id="l-finalvalue" min="0" step="0.5">
+          <div class="hint muted" id="l-finalhint"></div>
+        </div>
+        <div class="breakdown">
+          <div class="brow"><span class="k">Category multiplier</span><span class="v" id="l-mult">—</span></div>
+          <div class="brow"><span class="k">Item value (in band)</span><span class="v" id="l-market">—</span></div>
+          <div class="brow"><span class="k">+ Delivery</span><span class="v" id="l-pdelivery">—</span></div>
+          <div class="brow"><span class="k">+ Cleaning</span><span class="v" id="l-pcleaning">—</span></div>
+          <div class="brow total"><span class="k">= Listing price</span><span class="v" id="l-ptotal">—</span></div>
+        </div>
+        <div class="payout-box"><div><div class="k">erlume cost basis (payout)</div></div><div class="v" id="l-payout">—</div></div>
+        <div class="commission-line">erlume commission: <span id="l-cut">—</span> KWD (<span id="l-pct2">25</span>%, min 10 KWD)</div>
+        <div id="l-factors" class="md"></div>
+        <div class="cta-row" style="margin-top:18px">
+          <button type="button" class="btn" id="l-save">Save to price log</button>
+        </div>
+      </section>
+    </div>
+  </div><!-- /tab-listing -->
+
+  <!-- PRICE LOG (shared — shows on both tabs) -->
+  <section class="card log-card">
+    <h2>Price Log</h2>
+    <div id="log-table"><span class="log-empty">No bags priced yet.</span></div>
+  </section>
+
+  <div class="footnote">Estimates only — final price confirmed after physical inspection.</div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img src="/erlume-logo.png" alt="erlume">
+    </div>
+    <div class="footer-note">Pre-loved luxury, priced with precision — internal pricing tool · Kuwait</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var fmt = function (n) { return (n == null || isNaN(n)) ? '—' : Number(n).toFixed(3); };
+
+  // Surface any uncaught JS error visibly, so nothing fails silently.
+  window.addEventListener('error', function (e) {
+    var b = document.getElementById('js-error-banner');
+    if (b) { b.style.display = 'block'; b.textContent = 'Script error: ' + e.message + ' (line ' + e.lineno + ')'; }
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var b = document.getElementById('js-error-banner');
+    if (b) { b.style.display = 'block'; b.textContent = 'Request failed: ' + (e.reason && e.reason.message || e.reason); }
+  });
+
+  var lastIdentify = null;
+  var lastComps = null;
+  var lastPrice = null;
+  var lastListing = null;
+  var originalPriceMemo = null; // remembered when basis switches to comp, for the log
+  var queryEdited = false;
+
+  // ---- photo previews -------------------------------------------------------
+  $('photos').addEventListener('change', function () {
+    var box = $('previews');
+    box.innerHTML = '';
+    Array.prototype.slice.call($('photos').files, 0, 3).forEach(function (f) {
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      box.appendChild(img);
+    });
+  });
+
+  function showError(el, msg) {
+    el.textContent = msg || '';
+    el.classList.toggle('show', !!msg);
+  }
+
+  // Modern toast (auto-dismiss). type: 'success' | 'error' | ''
+  function showToast(msg, type) {
+    var c = document.getElementById('toast-container');
+    if (!c) { c = document.createElement('div'); c.id = 'toast-container'; c.className = 'toast-container'; document.body.appendChild(c); }
+    var t = document.createElement('div');
+    t.className = 'toast ' + (type || '');
+    t.textContent = msg;
+    c.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('show'); });
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 320); }, 3200);
+  }
+
+  // Modern confirm modal. opts: {title, text, confirmText, cancelText, danger, onConfirm}
+  function showConfirm(opts) {
+    opts = opts || {};
+    var ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    ov.innerHTML =
+      '<div class="modal-box" role="dialog" aria-modal="true">' +
+        '<div class="modal-title"></div>' +
+        '<div class="modal-text"></div>' +
+        '<div class="modal-actions">' +
+          '<button class="modal-btn cancel"></button>' +
+          '<button class="modal-btn ' + (opts.danger ? 'danger' : 'confirm') + '"></button>' +
+        '</div>' +
+      '</div>';
+    ov.querySelector('.modal-title').textContent = opts.title || 'Are you sure?';
+    ov.querySelector('.modal-text').textContent = opts.text || '';
+    ov.querySelector('.cancel').textContent = opts.cancelText || 'Cancel';
+    ov.querySelector('.modal-actions .' + (opts.danger ? 'danger' : 'confirm')).textContent = opts.confirmText || 'Confirm';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function () { ov.classList.add('show'); });
+    function close() { ov.classList.remove('show'); setTimeout(function () { ov.remove(); }, 200); }
+    ov.querySelector('.cancel').addEventListener('click', close);
+    ov.querySelector('.modal-actions .' + (opts.danger ? 'danger' : 'confirm')).addEventListener('click', function () {
+      close(); if (opts.onConfirm) opts.onConfirm();
+    });
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+  }
+
+  // POST helper used by the listing-tab handlers. isForm=true sends FormData
+  // (multipart, for photo upload); otherwise JSON. Rejects on non-2xx with the
+  // server's error message.
+  function post(url, body, isForm) {
+    return fetch(url, isForm
+      ? { method: 'POST', body: body }
+      : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error(d.error || r.statusText);
+          return d;
+        });
+      });
+  }
+
+  function syncQuery() {
+    if (queryEdited) return;
+    var parts = [$('brand').value.trim(), $('model').value.trim(), lastIdentify && lastIdentify.size || ''];
+    $('bagquery').value = parts.filter(Boolean).join(' ');
+  }
+  $('bagquery').addEventListener('input', function () { queryEdited = true; });
+  $('brand').addEventListener('input', syncQuery);
+  $('model').addEventListener('input', syncQuery);
+
+  // ---- Step A: identify -----------------------------------------------------
+  $('btn-identify').addEventListener('click', function () {
+    showError($('form-error'), '');
+    var files = Array.prototype.slice.call($('photos').files, 0, 3);
+    if (!files.length) { showError($('form-error'), 'Upload at least one photo first.'); return; }
+    var fd = new FormData();
+    files.forEach(function (f) { fd.append('photos', f); });
+    fd.append('brand', $('brand').value);
+    fd.append('model', $('model').value);
+    var btn = $('btn-identify');
+    btn.disabled = true; btn.textContent = 'Identifying…';
+    fetch('/api/identify', { method: 'POST', body: fd })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); return d; }); })
+      .then(function (r) {
+        lastIdentify = r;
+        if (r.brand) $('brand').value = r.brand;
+        if (r.model) $('model').value = r.model;
+        if (r.brandTier) $('tier').value = r.brandTier;
+        syncQuery();
+        $('id-box').classList.add('show');
+        $('id-name').textContent = [r.brand, r.model, r.size].filter(Boolean).join(' ') || 'Unidentified';
+        $('id-conf').textContent = r.confidence + ' confidence';
+        $('id-conf').className = 'conf ' + r.confidence;
+        $('id-meta').textContent = [r.material, r.color].filter(Boolean).join(' · ');
+        $('id-notes').textContent = (r.confidence === 'low' ? 'Low confidence — confirm brand & model before continuing. ' : '') + (r.notes || '');
+        toggleUltra();
+        calculate();
+      })
+      .catch(function (e) { showError($('form-error'), e.message); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Identify from photos'; });
+  });
+
+  // ---- Step B: comps --------------------------------------------------------
+  $('btn-comps').addEventListener('click', function () {
+    showError($('form-error'), '');
+    showError($('comps-error'), '');
+    var brand = $('brand').value.trim();
+    var model = $('model').value.trim();
+    if (!brand || !model) { showError($('form-error'), 'Brand and model are required — identify from photos or type them.'); return; }
+    var btn = $('btn-comps');
+    btn.disabled = true; btn.textContent = 'Searching…';
+    fetch('/api/comps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        brand: brand, model: model,
+        size: lastIdentify && lastIdentify.size,
+        material: lastIdentify && lastIdentify.material,
+        color: lastIdentify && lastIdentify.color,
+        condition: $('condition').value
+      })
+    })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); return d; }); })
+      .then(function (r) {
+        lastComps = r;
+        var list = $('comps-list');
+        list.innerHTML = '';
+        r.comps.forEach(function (c) {
+          var div = document.createElement('div');
+          div.className = 'comp-item';
+          div.innerHTML =
+            (c.image ? '<img src="' + c.image + '" alt="">' : '') +
+            '<div><div class="c-title">' +
+            (c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener">' + c.title + '</a>' : c.title) +
+            '</div><div class="c-note">' + c.condition + ' · ' + c.source + (c.similarityNote ? ' — ' + c.similarityNote : '') + '</div></div>' +
+            '<div class="c-price">' + fmt(c.priceKwd) + ' <small>KWD' + (c.priceUsd ? ' · $' + Math.round(c.priceUsd) : '') + '</small></div>';
+          list.appendChild(div);
+        });
+        if (!r.comps.length) {
+          list.innerHTML = '<div class="hint muted" style="margin-top:8px">No API comps found — use the manual search buttons above.</div>';
+        }
+        if (r.avgKwd != null) {
+          $('comps-median').style.display = '';
+          $('comps-median').textContent = 'Average of comps: ' + fmt(r.avgKwd) + ' KWD' +
+            (r.enoughComps ? ' — applied as resale comp below.' : ' (only 1 comp — treat with caution).');
+          if (r.enoughComps) {
+            if (getBasis() === 'original') originalPriceMemo = parseFloat($('price').value) || null;
+            document.querySelector('input[name="basis"][value="comp"]').checked = true;
+            updateBasisUI();
+            $('price').value = r.avgKwd;
+          }
+        } else {
+          $('comps-median').style.display = 'none';
+        }
+        showError($('comps-error'), r.ebayError ? 'eBay error: ' + r.ebayError
+          : (!r.ebayAvailable ? 'eBay API not configured — showing internal price log + manual links only.' : ''));
+        calculate();
+      })
+      .catch(function (e) { showError($('form-error'), e.message); })
+      .then(function () { btn.disabled = false; btn.textContent = 'AI comps'; });
+  });
+
+  // ---- pricing basis --------------------------------------------------------
+  var optOriginal = $('opt-original');
+  var optComp = $('opt-comp');
+
+  function getBasis() {
+    var checked = document.querySelector('input[name="basis"]:checked');
+    return checked ? checked.value : 'original';
+  }
+
+  function updateBasisUI() {
+    var basis = getBasis();
+    if (basis === 'original') {
+      optOriginal.classList.add('active');
+      optComp.classList.remove('active');
+      $('price-label').textContent = 'Original retail price (KWD)';
+      $('year-field').style.display = '';
+      $('comp-note').classList.remove('show');
+    } else {
+      optComp.classList.add('active');
+      optOriginal.classList.remove('active');
+      $('price-label').textContent = 'Resale comp price (KWD) — price of a comparable used bag found online';
+      $('year-field').style.display = 'none';
+      $('comp-note').classList.add('show');
+    }
+  }
+
+  optOriginal.addEventListener('click', function () {
+    document.querySelector('input[name="basis"][value="original"]').checked = true;
+    if (originalPriceMemo != null) $('price').value = originalPriceMemo;
+    updateBasisUI(); calculate();
+  });
+  optComp.addEventListener('click', function () {
+    if (getBasis() === 'original') originalPriceMemo = parseFloat($('price').value) || originalPriceMemo;
+    document.querySelector('input[name="basis"][value="comp"]').checked = true;
+    if (lastComps && lastComps.avgKwd != null) $('price').value = lastComps.avgKwd;
+    updateBasisUI(); calculate();
+  });
+
+  // ---- Step C: price (live, server-side formula) ------------------------------
+  var calcTimer = null;
+  function calculate() {
+    clearTimeout(calcTimer);
+    calcTimer = setTimeout(doCalculate, 200);
+  }
+
+  function doCalculate() {
+    var basis = getBasis();
+    var price = parseFloat($('price').value);
+    if (isNaN(price) || price < 0) price = 0;
+
+    var body = {
+      brandTier: $('tier').value,
+      condition: $('condition').value,
+      pickupFee: Number($('pickup').value),
+      cleaningCost: parseFloat($('cleaning').value) || 0
+    };
+    if (basis === 'comp') {
+      body.compPrice = price;
+    } else {
+      body.originalPrice = price;
+      if ($('year').value.trim()) body.yearPurchased = parseInt($('year').value, 10);
+    }
+
+    fetch('/api/price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); return d; }); })
+      .then(render)
+      .catch(function (e) { showError($('form-error'), e.message); });
+  }
+
+  function render(r) {
+    lastPrice = r;
+    var gatewayReserve = r.listingPrice - r.base;
+
+    $('listing-price').textContent = r.listingPrice.toFixed(3);
+    $('row-market').textContent = fmt(r.marketValue);
+    $('row-pickup').textContent = fmt(r.pickupFee);
+    $('row-cleaning').textContent = fmt(r.cleaningCost);
+    $('row-gateway').textContent = fmt(gatewayReserve);
+    $('row-total').textContent = r.listingPrice.toFixed(3);
+    $('seller-payout').textContent = fmt(r.sellerPayout) + ' KWD';
+    $('commission-amount').textContent = fmt(r.erlumeCut);
+
+    var badge = $('accept-badge');
+    if (r.accept) {
+      badge.className = 'badge accept';
+      badge.textContent = 'Accept — profitable';
+    } else {
+      badge.className = 'badge decline';
+      badge.textContent = 'Decline — below the 100 KWD minimum';
+    }
+
+    var warn = $('server-warning');
+    if (r.warnings && r.warnings.length) {
+      warn.innerHTML = r.warnings.join('<br>');
+      warn.classList.add('show');
+    } else {
+      warn.classList.remove('show');
+    }
+
+    var mb = $('markdown-body');
+    mb.innerHTML = '';
+    (r.markdowns || []).forEach(function (m) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>After ' + m.months + ' months</td>' +
+        '<td>-' + Math.round(m.discount * 100) + '%</td>' +
+        '<td>' + m.listingPrice.toFixed(3) + '</td>' +
+        '<td>' + fmt(m.erlumeCut) + '</td>' +
+        '<td>' + fmt(m.sellerPayout) + '</td>';
+      mb.appendChild(tr);
+    });
+  }
+
+  ['price', 'tier', 'year', 'condition', 'pickup', 'cleaning'].forEach(function (id) {
+    $(id).addEventListener('input', calculate);
+    $(id).addEventListener('change', calculate);
+  });
+
+  // ---- payment toggle & ultra note ---------------------------------------------
+  $('payment-toggle').addEventListener('change', function () {
+    $('payment-detail').classList.toggle('show', $('payment-toggle').checked);
+  });
+
+  function toggleUltra() {
+    $('ultra-note').classList.toggle('show', $('tier').value === 'ultra');
+  }
+  $('tier').addEventListener('change', toggleUltra);
+
+  // ---- save to log -----------------------------------------------------------------
+  $('btn-save').addEventListener('click', function () {
+    if (!lastPrice) return;
+    var basis = getBasis();
+    var price = parseFloat($('price').value) || null;
+    fetch('/api/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        brand: $('brand').value,
+        model: $('model').value,
+        size: lastIdentify && lastIdentify.size || '',
+        condition: $('condition').value,
+        yearPurchased: $('year').value || null,
+        originalPrice: basis === 'original' ? price : originalPriceMemo,
+        compPrices: (lastComps && lastComps.comps || []).map(function (c) { return c.priceKwd; }),
+        compAvg: basis === 'comp' ? price : (lastComps && lastComps.avgKwd || null),
+        marketValue: lastPrice.marketValue,
+        listingPrice: lastPrice.listingPrice,
+        erlumeCut: lastPrice.erlumeCut,
+        sellerPayout: lastPrice.sellerPayout,
+        accepted: lastPrice.accept
+      })
+    })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); return d; }); })
+      .then(function () { showToast('Saved to price log', 'success'); loadLog(); })
+      .catch(function (e) { showToast('Save failed: ' + e.message, 'error'); });
+  });
+
+  // ---- price log --------------------------------------------------------------------
+  function loadLog() {
+    fetch('/api/log')
+      .then(function (r) { return r.json(); })
+      .then(function (entries) {
+        var box = $('log-table');
+        if (!entries.length) { box.innerHTML = '<span class="log-empty">No bags priced yet.</span>'; return; }
+        var rows = entries.map(function (e) {
+          return '<tr>' +
+            '<td>' + e.createdAt.slice(0, 10) + '</td>' +
+            '<td>' + [e.brand, e.model, e.size].filter(Boolean).join(' ') + '</td>' +
+            '<td>' + (e.condition || '') + '</td>' +
+            '<td class="num">' + (e.originalPrice != null ? fmt(e.originalPrice) : '—') + '</td>' +
+            '<td class="num">' + (e.compAvg != null ? fmt(e.compAvg) : (e.compMedian != null ? fmt(e.compMedian) : '—')) + '</td>' +
+            '<td class="num">' + fmt(e.listingPrice) + '</td>' +
+            '<td class="num">' + fmt(e.sellerPayout) + '</td>' +
+            '<td>' + (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>') + '</td>' +
+            '<td><button type="button" class="del-btn" data-id="' + e.id + '" title="Delete this entry">Delete</button></td>' +
+            '</tr>';
+        }).join('');
+        box.innerHTML = '<table class="log-table"><thead><tr>' +
+          '<th>Date</th><th>Bag</th><th>Condition</th><th class="num">Retail</th><th class="num">Comp avg.</th><th class="num">Listing</th><th class="num">Payout</th><th></th><th></th>' +
+          '</tr></thead><tbody>' + rows + '</tbody></table>';
+        box.querySelectorAll('.del-btn').forEach(function (b) {
+          b.addEventListener('click', function () {
+            showConfirm({
+              title: 'Delete entry?',
+              text: 'This removes it from the price log permanently.',
+              confirmText: 'Delete', cancelText: 'Keep', danger: true,
+              onConfirm: function () {
+                fetch('/api/log/' + b.getAttribute('data-id'), { method: 'DELETE' })
+                  .then(function (r) { if (!r.ok) throw new Error('delete failed'); return r.json(); })
+                  .then(function () { loadLog(); showToast('Entry deleted', 'success'); })
+                  .catch(function (e) { showToast('Could not delete: ' + e.message, 'error'); });
+              }
+            });
+          });
+        });
+      });
+  }
+
+  // ---- init ------------------------------------------------------------------------
+  window.openBagSearch = function (site) {
+    var q = $('bagquery').value.trim();
+    if (!q) { $('bagquery').focus(); return; }
+    var enc = encodeURIComponent(q);
+    var urls = {
+      ebay: 'https://www.ebay.com/sch/i.html?_nkw=' + enc + '&LH_Sold=1&LH_Complete=1',
+      tlc: 'https://theluxurycloset.com/search?q=' + enc,
+      vestiaire: 'https://www.vestiairecollective.com/search/?q=' + enc,
+      google: 'https://www.google.com/search?q=' + enc + '%20price'
+    };
+    window.open(urls[site], '_blank');
+  };
+
+  // Show the live commission rate / floor from config (no hardcoded %).
+  fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
+    if (cfg.commissionRate != null) {
+      $('commission-pct').textContent = Math.round(cfg.commissionRate * 100);
+      $('l-pct2').textContent = Math.round(cfg.commissionRate * 100);
+    }
+    if (cfg.commissionFloorKWD != null) $('commission-floor').textContent = cfg.commissionFloorKWD;
+  }).catch(function () {});
+
+  // ---- tabs (navbar links) ----------------------------------------------------------
+  function switchTab(target) {
+    document.querySelectorAll('[data-tab]').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === target);
+    });
+    $('tab-consignment').style.display = target === 'consignment' ? '' : 'none';
+    $('tab-listing').style.display = target === 'listing' ? '' : 'none';
+    if (target === 'listing') {
+      // Carry brand/model/comp average from the consignment tab if present.
+      if (lastComps && lastComps.avgKwd != null && !$('l-compavg').value) $('l-compavg').value = lastComps.avgKwd;
+      if ($('brand').value && !$('l-brand').value) $('l-brand').value = $('brand').value;
+      if ($('model').value && !$('l-model').value) $('l-model').value = $('model').value;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+  });
+
+  // ---- listing tab: photo previews ---------------------------------------------------
+  $('l-photos').addEventListener('change', function () {
+    var box = $('l-previews'); box.innerHTML = '';
+    Array.prototype.slice.call($('l-photos').files, 0, 3).forEach(function (f) {
+      var img = document.createElement('img'); img.src = URL.createObjectURL(f); box.appendChild(img);
+    });
+  });
+
+  // ---- listing tab: identify from photos ---------------------------------------------
+  $('l-identify').addEventListener('click', function () {
+    showError($('l-error'), '');
+    var files = Array.prototype.slice.call($('l-photos').files, 0, 3);
+    if (!files.length) { showError($('l-error'), 'Upload at least one photo first.'); return; }
+    var fd = new FormData();
+    files.forEach(function (f) { fd.append('photos', f); });
+    fd.append('brand', $('l-brand').value); fd.append('model', $('l-model').value);
+    var btn = $('l-identify'); btn.disabled = true; btn.textContent = 'Identifying…';
+    post('/api/identify', fd, true).then(function (r) {
+      lastIdentify = r;
+      if (r.brand) $('l-brand').value = r.brand;
+      if (r.model) $('l-model').value = r.model;
+      if (r.brandTier) $('l-brandtier').value = r.brandTier;
+      $('l-idbox').classList.add('show');
+      $('l-idname').textContent = [r.brand, r.model, r.size].filter(Boolean).join(' ') || 'Unidentified';
+      $('l-idconf').textContent = r.confidence + ' confidence';
+      $('l-idconf').className = 'conf ' + r.confidence;
+      $('l-idmeta').textContent = [r.material, r.color].filter(Boolean).join(' · ');
+      $('l-idnotes').textContent = (r.confidence === 'low' ? 'Low confidence — confirm before continuing. ' : '') + (r.notes || '');
+    }).catch(function (e) { showError($('l-error'), e.message); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Identify from photos'; });
+  });
+
+  // ---- listing tab: AI comps → average -----------------------------------------------
+  $('l-comps').addEventListener('click', function () {
+    showError($('l-error'), '');
+    var brand = $('l-brand').value.trim(), model = $('l-model').value.trim();
+    if (!brand || !model) { showError($('l-error'), 'Brand and model are required for comps — identify or type them.'); return; }
+    var btn = $('l-comps'); btn.disabled = true; btn.textContent = 'Searching…';
+    post('/api/comps', {
+      brand: brand, model: model,
+      size: lastIdentify && lastIdentify.size, material: lastIdentify && lastIdentify.material,
+      color: lastIdentify && lastIdentify.color, condition: $('l-condition').value
+    }).then(function (r) {
+      lastComps = r;
+      var list = $('l-complist'); list.innerHTML = '';
+      r.comps.forEach(function (c) {
+        var div = document.createElement('div'); div.className = 'comp-item';
+        div.innerHTML = (c.image ? '<img src="' + c.image + '" alt="">' : '') +
+          '<div><div class="c-title">' + (c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener">' + c.title + '</a>' : c.title) +
+          '</div><div class="c-note">' + c.condition + ' · ' + c.source + '</div></div>' +
+          '<div class="c-price">' + fmt(c.priceKwd) + ' <small>KWD</small></div>';
+        list.appendChild(div);
+      });
+      if (r.avgKwd != null) {
+        $('l-compavg').value = r.avgKwd;
+        $('l-comphint').textContent = 'Average of ' + r.comps.length + ' comps: ' + fmt(r.avgKwd) + ' KWD (filled in above).';
+      } else {
+        $('l-comphint').textContent = 'No comps found — type a value manually or leave blank.';
+      }
+    }).catch(function (e) { showError($('l-error'), e.message); })
+      .then(function () { btn.disabled = false; btn.textContent = 'AI comps → average'; });
+  });
+
+  // ---- listing (items we buy) — shared runner for AI / manual / live-edit -----------
+  // extra: {} = AI suggest, {mode:'manual'} = formula midpoint, {chosenValue:N} = override
+  function runListing(extra, btn, busyText, doneText) {
+    showError($('l-error'), '');
+    var starting = parseFloat($('l-starting').value);
+    if (Number.isNaN(starting) || starting <= 0) { showError($('l-error'), 'Enter a starting price first.'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = busyText; }
+    var body = {
+      startingPrice: starting,
+      deliveryFee: Number($('l-delivery').value || 0),
+      cleaningCost: Number($('l-cleaning').value || 0),
+      brand: $('l-brand').value, model: $('l-model').value,
+      brandTier: $('l-brandtier').value,
+      rare: $('l-rare').value, vintage: $('l-vintage').value, trendy: $('l-trendy').value,
+      seasonal: $('l-seasonal').value, material: $('l-material').value, condition: $('l-condition').value,
+      compAvg: $('l-compavg').value ? Number($('l-compavg').value) : undefined
+    };
+    for (var k in extra) body[k] = extra[k];
+    return post('/api/listing', body).then(function (r) {
+      renderListing(r);
+    }).catch(function (e) { showError($('l-error'), e.message); })
+      .then(function () { if (btn) { btn.disabled = false; btn.textContent = doneText; } });
+  }
+
+  function renderListing(r) {
+    lastListing = r;
+    $('l-listing').textContent = r.listingPrice.toFixed(3);
+    $('l-low').textContent = fmt(r.range.low);
+    $('l-high').textContent = fmt(r.range.high);
+    $('l-mult').textContent = '×' + r.range.multiplier;
+    $('l-market').textContent = fmt(r.suggestedMarketValue);
+    $('l-pdelivery').textContent = fmt(r.pickupFee);
+    $('l-pcleaning').textContent = fmt(r.cleaningCost);
+    $('l-ptotal').textContent = r.listingPrice.toFixed(3);
+    $('l-payout').textContent = fmt(r.sellerPayout) + ' KWD';
+    $('l-cut').textContent = fmt(r.erlumeCut);
+    var badge = $('l-badge'); badge.style.display = 'inline-block';
+    badge.className = 'badge ' + (r.accept ? 'accept' : 'decline');
+    badge.textContent = r.accept ? 'Above 100 KWD minimum' : 'Below 100 KWD minimum';
+    $('l-reason').style.display = 'block';
+    $('l-reason').textContent = (r.method === 'ai' ? 'AI: ' : '') + r.aiReason;
+    // Editable final value (don't clobber while the user is typing in it).
+    $('l-finalwrap').style.display = 'block';
+    if (document.activeElement !== $('l-finalvalue')) $('l-finalvalue').value = r.suggestedMarketValue;
+    $('l-finalhint').textContent = 'Allowed band: ' + fmt(r.range.low) + ' – ' + fmt(r.range.high) + ' KWD. Values outside snap to the band.';
+    // How each attribute (rare, seasonal, vintage…) moved the price.
+    var startVal = parseFloat($('l-starting').value) || 0;
+    var cap = function (s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); };
+    // Apply the multipliers in order so each attribute's KWD amount is the real
+    // running delta (they compound), and the running total ends at the band mid.
+    var running = startVal;
+    var frows = (r.range.factors || []).map(function (f) {
+      var pct = Math.round((f.multiplier - 1) * 100);
+      var delta = running * (f.multiplier - 1);
+      running += delta;
+      var label, amt, cls;
+      if (pct > 0) { label = '+' + pct + '%'; amt = '+' + fmt(delta) + ' KWD'; cls = 'up'; }
+      else if (pct < 0) { label = pct + '%'; amt = fmt(delta) + ' KWD'; cls = 'down'; }
+      else { label = 'no effect'; amt = '—'; cls = 'flat'; }
+      return '<tr><td>' + cap(f.attr) + '</td><td>' + f.choice + '</td>' +
+        '<td class="effect ' + cls + '">' + label + '</td>' +
+        '<td class="effect ' + cls + '">' + amt + '</td>' +
+        '<td class="effect">' + fmt(running) + '</td></tr>';
+    }).join('');
+    $('l-factors').innerHTML =
+      '<div class="factor-title">How the attributes shaped the price</div>' +
+      '<table class="factor-table"><thead><tr><th>Attribute</th><th>Value</th><th>Effect</th><th>Amount</th><th>Running</th></tr></thead><tbody>' +
+      '<tr class="startrow"><td>Starting price</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(startVal) + '</td></tr>' +
+      frows +
+      '<tr class="combined"><td>Band midpoint (×' + r.range.multiplier + ')</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.range.mid) + '</td></tr>' +
+      '<tr class="midrow"><td>→ Item value used</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.suggestedMarketValue) + '</td></tr>' +
+      '</tbody></table>';
+  }
+
+  $('l-suggest').addEventListener('click', function () {
+    runListing({}, $('l-suggest'), 'Thinking…', 'Suggest price (AI)');
+  });
+  $('l-calc').addEventListener('click', function () {
+    runListing({ mode: 'manual' }, $('l-calc'), 'Calculating…', 'Calculate (formula only)');
+  });
+  // Live re-price when staff nudge the final value (debounced, no AI).
+  var finalTimer = null;
+  $('l-finalvalue').addEventListener('input', function () {
+    clearTimeout(finalTimer);
+    var v = parseFloat($('l-finalvalue').value);
+    if (Number.isNaN(v)) return;
+    finalTimer = setTimeout(function () { runListing({ chosenValue: v }); }, 300);
+  });
+
+  // ---- listing: save bought item to the price log -----------------------------------
+  $('l-save').addEventListener('click', function () {
+    if (!lastListing) { showToast('Run “Suggest” or “Calculate” first', 'error'); return; }
+    post('/api/log', {
+      source: 'listing',
+      brand: $('l-brand').value, model: $('l-model').value,
+      size: lastIdentify && lastIdentify.size || '',
+      condition: $('l-condition').value,
+      originalPrice: parseFloat($('l-starting').value) || null,   // starting price (what we paid)
+      compAvg: $('l-compavg').value ? Number($('l-compavg').value) : null,
+      attributes: lastListing.attrs,
+      marketValue: lastListing.suggestedMarketValue,
+      listingPrice: lastListing.listingPrice,
+      erlumeCut: lastListing.erlumeCut,
+      sellerPayout: lastListing.sellerPayout,
+      accepted: lastListing.accept
+    }).then(function () { showToast('Saved to price log', 'success'); loadLog(); })
+      .catch(function (e) { showToast('Save failed: ' + e.message, 'error'); });
+  });
+
+  updateBasisUI();
+  toggleUltra();
+  calculate();
+  loadLog();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{
+  // ============================================================================
+  // erlume pricing config — edit any number here, save, and the next price uses
+  // it (the server re-reads this file on every request — no restart needed).
+  // Rule of thumb for all multipliers: 1.00 = no change, 1.25 = +25%, 0.80 = -20%.
+  // Keep the commas and "quotes" exactly as they are.
+  // ============================================================================
+
+  // ---- Core money rules (apply to BOTH consignment and erlume-listing) -------
+  "commissionRate": 0.25,       // erlume commission = 25% of the base price
+  "commissionFloorKWD": 10,     // ...but never less than 10 KWD
+  "gatewayBuffer": 1.025,       // +2.5% added to the base (payment/handling); shown externally as "logistics & handling"
+  "acceptFloorKWD": 100,        // minimum item price — below this the item is marked Decline
+  "usdToKwd": 0.307,            // exchange rate to convert eBay (USD) comps into KWD
+
+  // ---- Consignment retention (bags sellers bring us) -------------------------
+  // How much of the ORIGINAL retail price a bag keeps, by brand tier and age.
+  // Age brackets below are the upper bounds: <=1yr, <=3yr, <=5yr, <=10yr, 11+yr.
+  "ageBrackets": [1, 3, 5, 10],
+  "defaultAgeBracketIndex": 2,  // if the year is unknown, use the <=5yr bracket (index 2)
+  "retentionTable": {
+    //           <=1yr  <=3yr  <=5yr  <=10yr 11+yr
+    "ultra":      [0.90, 0.85, 0.80, 0.85, 0.90],   // Hermès, Chanel, LV (hold value / can rise)
+    "premium":    [0.70, 0.60, 0.50, 0.40, 0.35],   // Gucci, Prada, Dior, YSL, Loewe...
+    "accessible": [0.50, 0.40, 0.30, 0.20, 0.15],   // Coach, MK, Kate Spade...
+    "highstreet": [0.25, 0.20, 0.15, 0.10, 0.10]    // everything else
+  },
+
+  // Condition adjustment for consignment market value.
+  "conditionFactors": {
+    "like-new": 1.0,       // no deduction
+    "gently-used": 0.9,    // -10%
+    "fair-worn": 0.75      // -25%
+  },
+
+  // Pickup fee options (KWD) added to the base price.
+  "pickupFees": {
+    "dropoff": 0,
+    "own-driver": 3,
+    "third-party": 5
+  },
+
+  // If a bag doesn't sell, drop the price on this schedule (discount off the base).
+  "markdownSchedule": [
+    { "months": 2, "discount": 0.15 },   // -15% after 2 months
+    { "months": 3, "discount": 0.3 },    // -30% after 3 months
+    { "months": 4, "discount": 0.5 },    // -50% after 4 months
+    { "months": 5, "discount": 0.75 }    // -75% after 5 months
+  ],
+
+  // Which brands count as which tier (used to auto-detect the tier from the brand name).
+  // Add brands to a list as needed — lowercase.
+  "brandTiers": {
+    "ultra": ["hermes", "hermès", "chanel", "louis vuitton", "lv"],
+    "premium": ["gucci", "prada", "dior", "ysl", "saint laurent", "yves saint laurent", "loewe", "celine", "céline", "fendi", "balenciaga", "bottega veneta", "valentino", "burberry", "givenchy", "miu miu", "chloe", "chloé"],
+    "accessible": ["coach", "michael kors", "mk", "kate spade", "tory burch", "marc jacobs", "furla", "longchamp", "dkny", "guess"]
+  },
+
+  // ---- erlume Listing mode (items WE BUY to resell) --------------------------
+  // Each attribute multiplies the STARTING price. All multipliers are combined
+  // (multiplied together) into one number, applied to the starting price to get
+  // the item's value; the AI then picks a price inside a +/- band around it.
+  // These are PLACEHOLDERS — tune after the team meeting. Brand is kept LOW on
+  // purpose (attributes should matter more than brand for items we buy).
+  "listingMode": {
+    "rangeSpreadPct": 0.10,        // AI's band = value +/- 10%. Wider = more room for the AI.
+    "multipliers": {
+      "rare":      { "yes": 1.30, "no": 1.00 },   // rare item: +30%
+      "vintage":   { "yes": 1.15, "no": 1.00 },   // vintage: +15%
+      "trendy":    { "yes": 1.12, "no": 1.00 },   // trending now: +12%
+      "seasonal":  { "in-season": 1.10, "off-season": 0.90, "n/a": 1.00 },   // in season +10%, off season -10%
+      "material":  { "premium": 1.12, "standard": 1.00, "low": 0.88 },       // material quality
+      "condition": { "like-new": 1.00, "gently-used": 0.90, "fair-worn": 0.75 },   // same tiers as consignment
+      "brand":     { "ultra": 1.06, "premium": 1.03, "accessible": 1.01, "highstreet": 1.00 }   // brand = LOW weight
+    }
+  }
+}
