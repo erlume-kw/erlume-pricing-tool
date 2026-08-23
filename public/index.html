@@ -884,6 +884,91 @@
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (n) { return (n == null || isNaN(n)) ? '—' : Number(n).toFixed(3); };
 
+  // ── Backend wiring ─────────────────────────────────────────────────────────
+  // The Pricing 3.0 logic now lives in the erlume backend. This tool is just a
+  // frontend: every '/api/*' call is transparently routed to the backend's
+  // admin-only '/api/pricing-tool' namespace with a Bearer token from an admin
+  // login. Point at a different backend with ?api=<url> or by setting
+  // localStorage.PRICING_API_BASE (default: http://127.0.0.1:3000).
+  var API_BASE = (new URLSearchParams(location.search).get('api'))
+    || localStorage.getItem('PRICING_API_BASE')
+    || 'http://127.0.0.1:3000';
+  var _rawFetch = window.fetch.bind(window);
+  function getToken() { return localStorage.getItem('PRICING_TOKEN') || ''; }
+  function setToken(t) { if (t) { localStorage.setItem('PRICING_TOKEN', t); } else { localStorage.removeItem('PRICING_TOKEN'); } }
+
+  // Route the tool's own '/api/x' calls to '<backend>/api/pricing-tool/x' and
+  // attach the admin token. Absolute URLs (e.g. the login call) pass through.
+  window.fetch = function (input, init) {
+    init = init || {};
+    if (typeof input === 'string' && input.indexOf('/api/') === 0) {
+      input = API_BASE + '/api/pricing-tool' + input.slice(4); // '/api/x' -> '/api/pricing-tool/x'
+      var headers = new Headers(init.headers || {});
+      var tok = getToken();
+      if (tok) headers.set('Authorization', 'Bearer ' + tok);
+      init.headers = headers;
+      return _rawFetch(input, init).then(function (res) {
+        if (res.status === 401 || res.status === 403) {
+          setToken('');
+          showLogin('Session expired or your account is not an admin — please sign in.');
+        }
+        return res;
+      });
+    }
+    return _rawFetch(input, init);
+  };
+
+  // Minimal admin login overlay (built in JS so no HTML markup changes needed).
+  function showLogin(message) {
+    var existing = document.getElementById('pt-login');
+    if (existing) { if (message) { var m0 = document.getElementById('pt-login-msg'); if (m0) m0.textContent = message; } return; }
+    var ov = document.createElement('div');
+    ov.id = 'pt-login';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    ov.innerHTML =
+      '<form id="pt-login-form" style="background:#fff;padding:28px;border-radius:14px;width:320px;max-width:90vw;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:inherit;">' +
+      '<h2 style="margin:0 0 4px;font-size:18px;">erlume pricing — sign in</h2>' +
+      '<p id="pt-login-msg" style="margin:0 0 16px;font-size:13px;color:#b00;min-height:16px;">' + (message || '') + '</p>' +
+      '<input id="pt-email" type="email" placeholder="Admin email" required style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;">' +
+      '<input id="pt-pass" type="password" placeholder="Password" required style="width:100%;padding:10px;margin-bottom:16px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;">' +
+      '<button type="submit" style="width:100%;padding:11px;border:0;border-radius:8px;background:#111;color:#fff;font-size:14px;cursor:pointer;">Sign in</button>' +
+      '</form>';
+    document.body.appendChild(ov);
+    document.getElementById('pt-login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('pt-login-msg');
+      msg.style.color = '#b00'; msg.textContent = 'Signing in…';
+      _rawFetch(API_BASE + '/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailAddress: document.getElementById('pt-email').value.trim(), password: document.getElementById('pt-pass').value })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (o) {
+          if (!o.ok || !o.d.accessToken) { msg.textContent = (o.d && o.d.error) || 'Sign in failed.'; return; }
+          setToken(o.d.accessToken);
+          location.reload();
+        })
+        .catch(function () { msg.textContent = 'Could not reach backend at ' + API_BASE + '.'; });
+    });
+  }
+
+  // Sign-out control — placed inside the navbar's link cluster (next to the
+  // tabs) as a muted pill, so it matches the nav instead of floating over it.
+  function addLogout() {
+    if (document.getElementById('pt-logout')) return;
+    var host = document.querySelector('.nav-links') || document.body;
+    var b = document.createElement('button');
+    b.id = 'pt-logout'; b.type = 'button'; b.textContent = 'Sign out';
+    b.style.cssText = 'font-family:inherit;font-size:0.82rem;cursor:pointer;padding:8px 14px;margin-left:8px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:transparent;color:#8a8a8a;transition:all .15s;';
+    b.addEventListener('mouseenter', function () { b.style.color = '#c0654f'; b.style.borderColor = 'rgba(192,101,79,.4)'; });
+    b.addEventListener('mouseleave', function () { b.style.color = '#8a8a8a'; b.style.borderColor = 'rgba(0,0,0,.12)'; });
+    b.addEventListener('click', function () { setToken(''); location.reload(); });
+    host.appendChild(b);
+  }
+
+  if (!getToken()) { showLogin(); } else { addLogout(); }
+  // ── end backend wiring ──────────────────────────────────────────────────────
+
   // Surface any uncaught JS error visibly, so nothing fails silently.
   window.addEventListener('error', function (e) {
     var b = document.getElementById('js-error-banner');
