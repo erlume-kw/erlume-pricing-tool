@@ -62,6 +62,13 @@
     padding: 4px 6px; border-radius: 6px; opacity: 0.55; transition: all 0.15s;
   }
   .del-btn:hover { opacity: 1; background: var(--red-bg); }
+  .menu-btn {
+    background: transparent; border: none; cursor: pointer; font-size: 20px; line-height: 1;
+    padding: 2px 10px; border-radius: 6px; color: #888; transition: all 0.15s;
+  }
+  .menu-btn:hover { background: #f0f0f0; color: #333; }
+  .rm-item:hover { background: #f5f5f5; }
+  .qm-row:hover { background: #f7f7f7 !important; }
   .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
   .nav-link {
     font-family: inherit; font-size: 0.88rem; cursor: pointer;
@@ -746,6 +753,10 @@
         <button type="button" class="solid" id="btn-save">Save to price log</button>
       </div>
       <div class="hint" id="save-msg"></div>
+
+      <div class="search-btns" style="margin-top:16px">
+        <button type="button" class="solid" id="btn-open-quote">Generate seller quote</button>
+      </div>
     </section>
 
   </div>
@@ -983,6 +994,7 @@
   var lastComps = null;
   var lastPrice = null;
   var lastListing = null;
+  var quoteOverride = null; // set when quoting from a price-log row; supersedes lastPrice
   var originalPriceMemo = null; // remembered when basis switches to comp, for the log
   var queryEdited = false;
 
@@ -1233,6 +1245,7 @@
 
   function render(r) {
     lastPrice = r;
+    quoteOverride = null; // a fresh calculation supersedes any log-row quote source
     var gatewayReserve = r.listingPrice - r.base;
 
     $('listing-price').textContent = r.listingPrice.toFixed(3);
@@ -1319,6 +1332,146 @@
       .catch(function (e) { showToast('Save failed: ' + e.message, 'error'); });
   });
 
+  // ---- seller quote modal (usable from the price result OR any price-log row) ----
+  function downloadQuotePdf(estimateId, number) {
+    fetch('/api/quote/' + estimateId + '/pdf')
+      .then(function (r) { if (!r.ok) throw new Error('PDF unavailable'); return r.blob(); })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'Quote-' + (number || estimateId) + '.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      })
+      .catch(function (e) { showToast('Download failed: ' + e.message, 'error'); });
+  }
+
+  // data: { bagName, brand, model, listingPrice, erlumeCut, sellerPayout }
+  function openQuoteModal(data) {
+    if (!data || data.listingPrice == null || data.sellerPayout == null) { showToast('No price to quote — calculate first', 'error'); return; }
+    var old = document.getElementById('quote-modal'); if (old) old.remove();
+
+    var mode = 'existing';
+    var selectedSeller = null;   // fresh, per-modal state — no cross-contamination
+    var searchTimer = null;
+    var ON = 'flex:1;padding:8px;border-radius:8px;font:inherit;font-size:13px;cursor:pointer;border:1px solid #111;background:#111;color:#fff;';
+    var OFF = 'flex:1;padding:8px;border-radius:8px;font:inherit;font-size:13px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#333;';
+    var INP = 'width:100%;padding:9px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;font:inherit;';
+
+    var ov = document.createElement('div');
+    ov.id = 'quote-modal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:14px;width:420px;max-width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.25);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+          '<h3 style="margin:0;font-size:17px;">Generate seller quote</h3>' +
+          '<button type="button" id="qm-close" style="border:none;background:none;font-size:24px;cursor:pointer;color:#999;line-height:1;">&times;</button>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#666;margin-bottom:4px;">Bag</div>' +
+        '<input type="text" id="qm-item" style="' + INP + 'margin-bottom:6px;">' +
+        '<div style="font-size:12px;color:#888;margin-bottom:14px;">Payout <strong>' + fmt(data.sellerPayout) + ' KWD</strong> · commission ' + fmt(data.erlumeCut) + ' KWD</div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
+          '<button type="button" id="qm-existing" style="' + ON + '">Existing seller</button>' +
+          '<button type="button" id="qm-new" style="' + OFF + '">New contact</button>' +
+        '</div>' +
+        '<div id="qm-ex">' +
+          '<input type="text" id="qm-search" placeholder="Search seller by name, phone, or email" style="' + INP + '">' +
+          '<div id="qm-results" style="margin-top:6px;"></div>' +
+          '<div id="qm-selected" style="margin-top:6px;font-size:12px;color:#2a7d4f;"></div>' +
+        '</div>' +
+        '<div id="qm-nw" style="display:none;">' +
+          '<input type="text" id="qm-name" placeholder="Name" style="' + INP + 'margin-bottom:8px;">' +
+          '<input type="text" id="qm-email" placeholder="Email (optional)" style="' + INP + 'margin-bottom:8px;">' +
+          '<input type="text" id="qm-phone" placeholder="Phone (optional)" style="' + INP + '">' +
+        '</div>' +
+        '<button type="button" id="qm-generate" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;background:#111;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;">Generate quote</button>' +
+        '<div id="qm-msg" style="margin-top:10px;font-size:13px;"></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var g = function (id) { return document.getElementById(id); };
+    g('qm-item').value = data.bagName || [data.brand, data.model].filter(Boolean).join(' ');
+
+    function setMode(m) {
+      mode = m;
+      g('qm-existing').style.cssText = m === 'existing' ? ON : OFF;
+      g('qm-new').style.cssText = m === 'new' ? ON : OFF;
+      g('qm-ex').style.display = m === 'existing' ? 'block' : 'none';
+      g('qm-nw').style.display = m === 'new' ? 'block' : 'none';
+    }
+    g('qm-existing').addEventListener('click', function () { setMode('existing'); });
+    g('qm-new').addEventListener('click', function () { setMode('new'); });
+
+    g('qm-search').addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      selectedSeller = null; g('qm-selected').textContent = '';
+      var q = g('qm-search').value.trim();
+      if (!q) { g('qm-results').innerHTML = ''; return; }
+      searchTimer = setTimeout(function () {
+        fetch('/api/sellers?q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            var list = (d && d.data) || [];
+            if (!list.length) { g('qm-results').innerHTML = '<div style="font-size:12px;color:#999;padding:4px 0;">No sellers found.</div>'; return; }
+            g('qm-results').innerHTML = list.map(function (s, i) {
+              var label = [s.fullName, s.phoneNumber, s.emailAddress].filter(Boolean).join(' · ') || 'Seller';
+              return '<div data-i="' + i + '" class="qm-row" style="padding:8px;border:1px solid #eee;border-radius:6px;margin-bottom:4px;cursor:pointer;">' + label + '</div>';
+            }).join('');
+            g('qm-results').querySelectorAll('.qm-row').forEach(function (row) {
+              row.addEventListener('click', function () {
+                selectedSeller = list[Number(row.getAttribute('data-i'))];
+                g('qm-results').innerHTML = '';
+                g('qm-search').value = selectedSeller.fullName || selectedSeller.phoneNumber || '';
+                g('qm-selected').textContent = 'Selected: ' + [selectedSeller.fullName, selectedSeller.phoneNumber].filter(Boolean).join(' · ');
+              });
+            });
+          })
+          .catch(function () { g('qm-results').innerHTML = '<div style="font-size:12px;color:#c0392b;">Search failed.</div>'; });
+      }, 300);
+    });
+
+    g('qm-generate').addEventListener('click', function () {
+      var msg = g('qm-msg'); msg.innerHTML = '';
+      var itemName = g('qm-item').value.trim();
+      if (!itemName) { showToast('Enter the bag name', 'error'); g('qm-item').focus(); return; }
+      var body = { bagName: itemName, brand: data.brand || '', model: data.model || '', listingPrice: data.listingPrice, erlumeCut: data.erlumeCut, sellerPayout: data.sellerPayout, skipLog: !!data.skipLog };
+      if (mode === 'existing') {
+        if (!selectedSeller) { showToast('Search and select a seller', 'error'); g('qm-search').focus(); return; }
+        body.sellerId = selectedSeller._id;
+      } else {
+        var nm = g('qm-name').value.trim();
+        if (!nm && !g('qm-email').value.trim() && !g('qm-phone').value.trim()) { showToast('Enter contact details', 'error'); return; }
+        body.contact = { name: nm, email: g('qm-email').value.trim(), phone: g('qm-phone').value.trim() };
+      }
+      var gb = g('qm-generate'); gb.disabled = true; gb.textContent = 'Creating quote…';
+      post('/api/quote', body)
+        .then(function (r) {
+          var num = r.estimateNumber || '';
+          msg.innerHTML = 'Quote <strong>' + num + '</strong> created — '
+            + '<a href="' + r.estimateUrl + '" target="_blank" style="color:#c0654f;text-decoration:underline;">open in Zoho</a>'
+            + ' · <a href="#" id="qm-dl" style="color:#c0654f;text-decoration:underline;">download PDF</a>'
+            + (r.linkedSellerId ? ' · linked to seller' : '');
+          var dl = g('qm-dl'); if (dl) dl.addEventListener('click', function (e) { e.preventDefault(); downloadQuotePdf(r.estimateId, num); });
+          showToast('Quote created', 'success');
+          loadLog();
+        })
+        .catch(function (e) { showToast('Quote failed: ' + e.message, 'error'); })
+        .then(function () { gb.disabled = false; gb.textContent = 'Generate quote'; });
+    });
+
+    g('qm-close').addEventListener('click', function () { ov.remove(); });
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    setTimeout(function () { g('qm-search').focus(); }, 50);
+  }
+
+  $('btn-open-quote').addEventListener('click', function () {
+    if (!lastPrice) { showToast('Calculate a price first', 'error'); return; }
+    openQuoteModal({
+      bagName: [$('brand').value, $('model').value].filter(Boolean).join(' '),
+      brand: $('brand').value, model: $('model').value,
+      listingPrice: lastPrice.listingPrice, erlumeCut: lastPrice.erlumeCut, sellerPayout: lastPrice.sellerPayout,
+    });
+  });
+
   // ---- price log --------------------------------------------------------------------
   function loadLog() {
     fetch('/api/log')
@@ -1326,7 +1479,7 @@
       .then(function (entries) {
         var box = $('log-table');
         if (!entries.length) { box.innerHTML = '<span class="log-empty">No bags priced yet.</span>'; return; }
-        var rows = entries.map(function (e) {
+        var rows = entries.map(function (e, i) {
           return '<tr>' +
             '<td>' + e.createdAt.slice(0, 10) + '</td>' +
             '<td>' + [e.brand, e.model, e.size].filter(Boolean).join(' ') + '</td>' +
@@ -1335,29 +1488,69 @@
             '<td class="num">' + (e.compAvg != null ? fmt(e.compAvg) : (e.compMedian != null ? fmt(e.compMedian) : '—')) + '</td>' +
             '<td class="num">' + fmt(e.listingPrice) + '</td>' +
             '<td class="num">' + fmt(e.sellerPayout) + '</td>' +
-            '<td>' + (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>') + '</td>' +
-            '<td><button type="button" class="del-btn" data-id="' + e.id + '" title="Delete this entry">Delete</button></td>' +
+            '<td>' + (e.source === 'quote'
+              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;">Quote</span>'
+              : (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>')) + '</td>' +
+            '<td style="white-space:nowrap;text-align:right;"><button type="button" class="menu-btn" data-i="' + i + '" title="Actions" aria-label="Actions">⋮</button></td>' +
             '</tr>';
         }).join('');
         box.innerHTML = '<table class="log-table"><thead><tr>' +
           '<th>Date</th><th>Bag</th><th>Condition</th><th class="num">Retail</th><th class="num">Comp avg.</th><th class="num">Listing</th><th class="num">Payout</th><th></th><th></th>' +
           '</tr></thead><tbody>' + rows + '</tbody></table>';
-        box.querySelectorAll('.del-btn').forEach(function (b) {
-          b.addEventListener('click', function () {
-            showConfirm({
-              title: 'Delete entry?',
-              text: 'This removes it from the price log permanently.',
-              confirmText: 'Delete', cancelText: 'Keep', danger: true,
-              onConfirm: function () {
-                fetch('/api/log/' + b.getAttribute('data-id'), { method: 'DELETE' })
-                  .then(function (r) { if (!r.ok) throw new Error('delete failed'); return r.json(); })
-                  .then(function () { loadLog(); showToast('Entry deleted', 'success'); })
-                  .catch(function (e) { showToast('Could not delete: ' + e.message, 'error'); });
-              }
-            });
+        box.querySelectorAll('.menu-btn').forEach(function (b) {
+          b.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            openRowMenu(b, entries[Number(b.getAttribute('data-i'))]);
           });
         });
       });
+  }
+
+  // Prefill the consignment quote panel from a price-log row, then jump to it.
+  function quoteFromLog(e) {
+    if (!e) return;
+    openQuoteModal({
+      bagName: [e.brand, e.model, e.size].filter(Boolean).join(' '),
+      brand: e.brand || '', model: e.model || '',
+      listingPrice: e.listingPrice, erlumeCut: e.erlumeCut, sellerPayout: e.sellerPayout,
+      skipLog: true, // already in the log — don't create a duplicate entry
+    });
+  }
+
+  // ⋮ row action menu (Generate quote / Delete)
+  function closeRowMenu() {
+    var m = document.getElementById('row-menu');
+    if (m) m.remove();
+    document.removeEventListener('click', closeRowMenu);
+  }
+  function confirmDeleteEntry(entry) {
+    showConfirm({
+      title: 'Delete entry?',
+      text: 'This removes it from the price log permanently.',
+      confirmText: 'Delete', cancelText: 'Keep', danger: true,
+      onConfirm: function () {
+        fetch('/api/log/' + entry.id, { method: 'DELETE' })
+          .then(function (r) { if (!r.ok) throw new Error('delete failed'); return r.json(); })
+          .then(function () { loadLog(); showToast('Entry deleted', 'success'); })
+          .catch(function (e) { showToast('Could not delete: ' + e.message, 'error'); });
+      }
+    });
+  }
+  function openRowMenu(btn, entry) {
+    closeRowMenu();
+    var rect = btn.getBoundingClientRect();
+    var menu = document.createElement('div');
+    menu.id = 'row-menu';
+    menu.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1px solid #e5e5e5;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.12);overflow:hidden;min-width:160px;font-size:13px;';
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.left = Math.max(8, rect.right - 160) + 'px';
+    menu.innerHTML =
+      '<button type="button" id="rm-quote" class="rm-item" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:#fff;font:inherit;cursor:pointer;">Generate quote</button>' +
+      '<button type="button" id="rm-delete" class="rm-item" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;border-top:1px solid #f0f0f0;background:#fff;color:#c0392b;font:inherit;cursor:pointer;">Delete</button>';
+    document.body.appendChild(menu);
+    document.getElementById('rm-quote').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); quoteFromLog(entry); });
+    document.getElementById('rm-delete').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); confirmDeleteEntry(entry); });
+    setTimeout(function () { document.addEventListener('click', closeRowMenu); }, 0);
   }
 
   // ---- init ------------------------------------------------------------------------
