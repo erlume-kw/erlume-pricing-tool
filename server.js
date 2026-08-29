@@ -13,8 +13,9 @@ import { fileURLToPath } from 'node:url';
 //   • localStorage.PRICING_API_BASE
 // Default backend: http://127.0.0.1:3000
 //
-// The old Express API + lib/ pricing modules are retained on disk for
-// reference/rollback but are no longer served here.
+// The old Express API and its lib/ pricing modules have been deleted — the
+// backend is the single source of truth. Recover them from git history if ever
+// needed (removed 2026-08-29).
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();

@@ -900,10 +900,12 @@
   // frontend: every '/api/*' call is transparently routed to the backend's
   // admin-only '/api/pricing-tool' namespace with a Bearer token from an admin
   // login. Point at a different backend with ?api=<url> or by setting
-  // localStorage.PRICING_API_BASE (default: http://127.0.0.1:3000).
+  // localStorage.PRICING_API_BASE. Defaults to the DEV backend so staff work
+  // never touches production data; use ?api=http://127.0.0.1:3000 for a local
+  // backend, or the production URL only when you really mean it.
   var API_BASE = (new URLSearchParams(location.search).get('api'))
     || localStorage.getItem('PRICING_API_BASE')
-    || 'http://127.0.0.1:3000';
+    || 'https://api-dev.erlume.com.kw';
   var _rawFetch = window.fetch.bind(window);
   function getToken() { return localStorage.getItem('PRICING_TOKEN') || ''; }
   function setToken(t) { if (t) { localStorage.setItem('PRICING_TOKEN', t); } else { localStorage.removeItem('PRICING_TOKEN'); } }
