@@ -547,7 +547,14 @@
   .error-note.show { display: block; }
 
   /* Price log */
-  .log-card { margin-top: 28px; }
+  .log-card {
+    margin-top: 28px;
+    /* 9 columns — let the log break out of the 1120px page width a little.
+       Never narrower than the wrap, never wider than the viewport. */
+    width: max(100%, min(1320px, calc(100vw - 72px)));
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
   table.log-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
   table.log-table th, table.log-table td {
     text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line);
@@ -558,6 +565,10 @@
   }
   table.log-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
   table.log-table th.num { text-align: right; }
+  .basis-tag {
+    font-size: 0.66rem; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--charcoal-soft); opacity: 0.75;
+  }
   .log-empty { font-size: 0.85rem; color: var(--charcoal-soft); font-style: italic; }
 </style>
 </head>
@@ -861,8 +872,8 @@
           <div class="brow"><span class="k">+ Cleaning</span><span class="v" id="l-pcleaning">—</span></div>
           <div class="brow total"><span class="k">= Listing price</span><span class="v" id="l-ptotal">—</span></div>
         </div>
-        <div class="payout-box"><div><div class="k">erlume cost basis (payout)</div></div><div class="v" id="l-payout">—</div></div>
-        <div class="commission-line">erlume commission: <span id="l-cut">—</span> KWD (<span id="l-pct2">25</span>%, min 10 KWD)</div>
+        <div class="payout-box"><div><div class="k">erlume cost basis</div></div><div class="v" id="l-payout">—</div></div>
+        <div class="commission-line">erlume profit: <span id="l-cut">—</span> KWD (<span id="l-pct2">25</span>%, min 10 KWD)</div>
         <div id="l-factors" class="md"></div>
         <div class="cta-row" style="margin-top:18px">
           <button type="button" class="btn" id="l-save">Save to price log</button>
@@ -1489,7 +1500,9 @@
             '<td class="num">' + (e.originalPrice != null ? fmt(e.originalPrice) : '—') + '</td>' +
             '<td class="num">' + (e.compAvg != null ? fmt(e.compAvg) : (e.compMedian != null ? fmt(e.compMedian) : '—')) + '</td>' +
             '<td class="num">' + fmt(e.listingPrice) + '</td>' +
-            '<td class="num">' + fmt(e.sellerPayout) + '</td>' +
+            '<td class="num">' + (e.source === 'listing'
+              ? fmt(e.erlumeCut) + ' <span class="basis-tag">profit</span>'
+              : fmt(e.sellerPayout) + ' <span class="basis-tag">payout</span>') + '</td>' +
             '<td>' + (e.source === 'quote'
               ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;">Quote</span>'
               : (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>')) + '</td>' +
@@ -1497,7 +1510,7 @@
             '</tr>';
         }).join('');
         box.innerHTML = '<table class="log-table"><thead><tr>' +
-          '<th>Date</th><th>Bag</th><th>Condition</th><th class="num">Retail</th><th class="num">Comp avg.</th><th class="num">Listing</th><th class="num">Payout</th><th></th><th></th>' +
+          '<th>Date</th><th>Bag</th><th>Condition</th><th class="num">Retail</th><th class="num">Comp avg.</th><th class="num">Listing</th><th class="num">Payout / Profit</th><th></th><th></th>' +
           '</tr></thead><tbody>' + rows + '</tbody></table>';
         box.querySelectorAll('.menu-btn').forEach(function (b) {
           b.addEventListener('click', function (ev) {
