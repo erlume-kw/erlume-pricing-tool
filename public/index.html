@@ -805,15 +805,30 @@
               <option value="ultra">Ultra-luxury</option>
               <option value="premium" selected>Premium</option>
               <option value="accessible">Accessible</option>
-              <option value="highstreet">High-street</option>
+              <option value="fastfashion">Fast Fashion</option>
             </select>
           </div>
+        </div>
+        <!-- Consignment already handles unbranded/fastfashion items well — the
+             retention curve prices them low and the SELLER carries the holding
+             risk. Listing mode means erlume's own cash buys the bag outright,
+             so routinely buying fastfashion-tier pieces is a worse use of that
+             capital than letting consignment do its job. This nudges staff
+             toward consignment instead of a hard block, since "fastfashion" is
+             really "brand not recognized" and can include a genuinely
+             exceptional unbranded/artisan piece worth buying anyway. -->
+        <div class="ultra-note" id="l-fastfashion-note">
+          <b>erlume usually doesn't buy fastfashion/unrecognized-brand items outright</b> — consignment already prices these fairly and the seller carries the holding risk, not erlume. Continue only if this specific piece has real rare, vintage, or craftsmanship value that justifies buying it directly.
         </div>
         <div class="cat-grid">
           <div class="field"><label class="field-label">Rare</label>
             <select id="l-rare"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
           <div class="field"><label class="field-label">Vintage</label>
-            <select id="l-vintage"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
+            <select id="l-vintage">
+              <option value="no" selected>Not vintage</option>
+              <option value="dated">Vintage — dated / lower demand</option>
+              <option value="desirable">Vintage — desirable / iconic</option>
+            </select></div>
         </div>
         <div class="cat-grid">
           <div class="field"><label class="field-label">Trendy</label>
@@ -872,8 +887,19 @@
           <div class="brow"><span class="k">+ Cleaning</span><span class="v" id="l-pcleaning">—</span></div>
           <div class="brow total"><span class="k">= Listing price</span><span class="v" id="l-ptotal">—</span></div>
         </div>
-        <div class="payout-box"><div><div class="k">erlume cost basis</div></div><div class="v" id="l-payout">—</div></div>
-        <div class="commission-line">erlume profit: <span id="l-cut">—</span> KWD (<span id="l-pct2">25</span>%, min 10 KWD)</div>
+        <!-- erlume Listing has no consignor — erlume already owns the bag, so
+             the shared formula's sellerPayout/erlumeCut split (built for a
+             seller/erlume commission) doesn't correspond to anything real
+             here. Real profit is simply what the buyer eventually pays minus
+             what erlume paid to acquire the bag and the real costs it covers. -->
+        <div class="breakdown">
+          <div class="brow"><span class="k">Listing price (buyer pays)</span><span class="v" id="l-profit-listing">—</span></div>
+          <div class="brow"><span class="k">− Starting price (what we paid)</span><span class="v" id="l-profit-starting">—</span></div>
+          <div class="brow"><span class="k">− Delivery</span><span class="v" id="l-profit-delivery">—</span></div>
+          <div class="brow"><span class="k">− Cleaning</span><span class="v" id="l-profit-cleaning">—</span></div>
+          <div class="brow total"><span class="k">= erlume profit</span><span class="v" id="l-profit-total">—</span></div>
+        </div>
+        <div class="commission-line" id="l-profit-pct">—% return on starting price</div>
         <div id="l-factors" class="md"></div>
         <div class="cta-row" style="margin-top:18px">
           <button type="button" class="btn" id="l-save">Save to price log</button>
@@ -914,9 +940,15 @@
   // localStorage.PRICING_API_BASE. Defaults to the DEV backend so staff work
   // never touches production data; use ?api=http://127.0.0.1:3000 for a local
   // backend, or the production URL only when you really mean it.
+  // TEMPORARY while calibrating erlume Listing mode locally (2026-09-12) —
+  // defaults to the LOCAL backend instead of the deployed dev one, so this
+  // machine doesn't need ?api= or a console command every time. "localhost"
+  // only ever means "whoever's browser is loading this page" — this must be
+  // reverted to https://api-dev.erlume.com.kw before anyone else uses this
+  // tool, or before considering the calibration work finished/deployed.
   var API_BASE = (new URLSearchParams(location.search).get('api'))
     || localStorage.getItem('PRICING_API_BASE')
-    || 'https://api-dev.erlume.com.kw';
+    || 'http://127.0.0.1:3000';
   var _rawFetch = window.fetch.bind(window);
   function getToken() { return localStorage.getItem('PRICING_TOKEN') || ''; }
   function setToken(t) { if (t) { localStorage.setItem('PRICING_TOKEN', t); } else { localStorage.removeItem('PRICING_TOKEN'); } }
@@ -1316,6 +1348,14 @@
   }
   $('tier').addEventListener('change', toggleUltra);
 
+  // erlume Listing tab: nudge away from buying fastfashion/unrecognized-brand
+  // items outright (consignment already handles that segment — see the note
+  // above the field). Same show/hide pattern as toggleUltra above.
+  function toggleFastFashionNote() {
+    $('l-fastfashion-note').classList.toggle('show', $('l-brandtier').value === 'fastfashion');
+  }
+  $('l-brandtier').addEventListener('change', toggleFastFashionNote);
+
   // ---- save to log -----------------------------------------------------------------
   $('btn-save').addEventListener('click', function () {
     if (!lastPrice) return;
@@ -1501,7 +1541,12 @@
             '<td class="num">' + (e.compAvg != null ? fmt(e.compAvg) : (e.compMedian != null ? fmt(e.compMedian) : '—')) + '</td>' +
             '<td class="num">' + fmt(e.listingPrice) + '</td>' +
             '<td class="num">' + (e.source === 'listing'
-              ? fmt(e.erlumeCut) + ' <span class="basis-tag">profit</span>'
+              // erlume already owns this bag — there's no consignor, so the
+              // real profit is listingPrice minus what we paid to acquire it
+              // and the real costs we covered (same math as the live
+              // calculator). Older rows saved before this field existed
+              // treat missing delivery/cleaning as 0.
+              ? fmt(e.listingPrice - (e.originalPrice || 0) - (e.deliveryFee || 0) - (e.cleaningCost || 0)) + ' <span class="basis-tag">profit</span>'
               : fmt(e.sellerPayout) + ' <span class="basis-tag">payout</span>') + '</td>' +
             '<td>' + (e.source === 'quote'
               ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;">Quote</span>'
@@ -1585,8 +1630,9 @@
   // Show the live commission rate / floor from config (no hardcoded %).
   fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
     if (cfg.commissionRate != null) {
+      // l-pct2 (erlume Listing's old "commission %" line) was removed —
+      // Listing mode has no commission, it's erlume's own profit on a flip.
       $('commission-pct').textContent = Math.round(cfg.commissionRate * 100);
-      $('l-pct2').textContent = Math.round(cfg.commissionRate * 100);
     }
     if (cfg.commissionFloorKWD != null) $('commission-floor').textContent = cfg.commissionFloorKWD;
   }).catch(function () {});
@@ -1707,8 +1753,19 @@
     $('l-pdelivery').textContent = fmt(r.pickupFee);
     $('l-pcleaning').textContent = fmt(r.cleaningCost);
     $('l-ptotal').textContent = r.listingPrice.toFixed(3);
-    $('l-payout').textContent = fmt(r.sellerPayout) + ' KWD';
-    $('l-cut').textContent = fmt(r.erlumeCut);
+    // Real profit for a buy-to-resell bag: erlume already owns it, so this is
+    // NOT the consignment sellerPayout/erlumeCut split (there is no seller to
+    // pay out — "everything goes back to us"). It's simply what the buyer
+    // pays minus what erlume paid to acquire the bag and the real costs
+    // erlume covers.
+    var startingPaid = parseFloat($('l-starting').value) || 0;
+    var profit = r.listingPrice - startingPaid - r.pickupFee - r.cleaningCost;
+    $('l-profit-listing').textContent = fmt(r.listingPrice) + ' KWD';
+    $('l-profit-starting').textContent = fmt(startingPaid) + ' KWD';
+    $('l-profit-delivery').textContent = fmt(r.pickupFee) + ' KWD';
+    $('l-profit-cleaning').textContent = fmt(r.cleaningCost) + ' KWD';
+    $('l-profit-total').textContent = fmt(profit) + ' KWD';
+    $('l-profit-pct').textContent = (startingPaid > 0 ? (profit / startingPaid * 100).toFixed(1) : '—') + '% return on starting price';
     var badge = $('l-badge'); badge.style.display = 'inline-block';
     badge.className = 'badge ' + (r.accept ? 'accept' : 'decline');
     badge.textContent = r.accept ? 'Above 100 KWD minimum' : 'Below 100 KWD minimum';
@@ -1721,8 +1778,12 @@
     // How each attribute (rare, seasonal, vintage…) moved the price.
     var startVal = parseFloat($('l-starting').value) || 0;
     var cap = function (s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); };
-    // Apply the multipliers in order so each attribute's KWD amount is the real
-    // running delta (they compound), and the running total ends at the band mid.
+    // Each row shows the attribute's raw, un-dampened multiplier from config
+    // (what the choice nominally means) — so this running total is the OLD
+    // straight-multiplication number, not necessarily the final one. When
+    // several boosts stack, diminishing returns (stackingDecay) pull the
+    // actual band midpoint below this naive total — the row inserted after
+    // the loop reconciles the two, so "Band midpoint" below always matches.
     var running = startVal;
     var frows = (r.range.factors || []).map(function (f) {
       var pct = Math.round((f.multiplier - 1) * 100);
@@ -1737,11 +1798,24 @@
         '<td class="effect ' + cls + '">' + amt + '</td>' +
         '<td class="effect">' + fmt(running) + '</td></tr>';
     }).join('');
+    var stackAdj = r.range.mid - running;
+    var stackRow = '';
+    if (Math.abs(stackAdj) > 0.01) {
+      var adjPct = running !== 0 ? Math.round((r.range.mid / running - 1) * 100) : 0;
+      var adjCls = stackAdj > 0 ? 'up' : 'down';
+      var adjLabel = (adjPct > 0 ? '+' : '') + adjPct + '%';
+      var adjAmt = (stackAdj > 0 ? '+' : '') + fmt(stackAdj) + ' KWD';
+      stackRow = '<tr><td>Diminishing returns (stacking cap)</td><td></td>' +
+        '<td class="effect ' + adjCls + '">' + adjLabel + '</td>' +
+        '<td class="effect ' + adjCls + '">' + adjAmt + '</td>' +
+        '<td class="effect">' + fmt(r.range.mid) + '</td></tr>';
+    }
     $('l-factors').innerHTML =
       '<div class="factor-title">How the attributes shaped the price</div>' +
       '<table class="factor-table"><thead><tr><th>Attribute</th><th>Value</th><th>Effect</th><th>Amount</th><th>Running</th></tr></thead><tbody>' +
       '<tr class="startrow"><td>Starting price</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(startVal) + '</td></tr>' +
       frows +
+      stackRow +
       '<tr class="combined"><td>Band midpoint (×' + r.range.multiplier + ')</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.range.mid) + '</td></tr>' +
       '<tr class="midrow"><td>→ Item value used</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.suggestedMarketValue) + '</td></tr>' +
       '</tbody></table>';
@@ -1775,6 +1849,13 @@
       attributes: lastListing.attrs,
       marketValue: lastListing.suggestedMarketValue,
       listingPrice: lastListing.listingPrice,
+      // deliveryFee/cleaningCost are saved so the log can recompute the real
+      // profit later (listingPrice − originalPrice − these). erlumeCut and
+      // sellerPayout are kept too, but only for the "Generate quote" action,
+      // which still uses the shared consignment-shaped quote formula — not
+      // shown to staff as this bag's profit anywhere.
+      deliveryFee: Number($('l-delivery').value || 0),
+      cleaningCost: Number($('l-cleaning').value || 0),
       erlumeCut: lastListing.erlumeCut,
       sellerPayout: lastListing.sellerPayout,
       accepted: lastListing.accept
@@ -1784,6 +1865,7 @@
 
   updateBasisUI();
   toggleUltra();
+  toggleFastFashionNote();
   calculate();
   loadLog();
 })();
