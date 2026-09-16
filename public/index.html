@@ -940,15 +940,9 @@
   // localStorage.PRICING_API_BASE. Defaults to the DEV backend so staff work
   // never touches production data; use ?api=http://127.0.0.1:3000 for a local
   // backend, or the production URL only when you really mean it.
-  // TEMPORARY while calibrating erlume Listing mode locally (2026-09-12) —
-  // defaults to the LOCAL backend instead of the deployed dev one, so this
-  // machine doesn't need ?api= or a console command every time. "localhost"
-  // only ever means "whoever's browser is loading this page" — this must be
-  // reverted to https://api-dev.erlume.com.kw before anyone else uses this
-  // tool, or before considering the calibration work finished/deployed.
   var API_BASE = (new URLSearchParams(location.search).get('api'))
     || localStorage.getItem('PRICING_API_BASE')
-    || 'http://127.0.0.1:3000';
+    || 'https://api-dev.erlume.com.kw';
   var _rawFetch = window.fetch.bind(window);
   function getToken() { return localStorage.getItem('PRICING_TOKEN') || ''; }
   function setToken(t) { if (t) { localStorage.setItem('PRICING_TOKEN', t); } else { localStorage.removeItem('PRICING_TOKEN'); } }
