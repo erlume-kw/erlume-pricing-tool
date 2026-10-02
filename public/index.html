@@ -941,6 +941,29 @@
   var API_BASE = (new URLSearchParams(location.search).get('api'))
     || localStorage.getItem('PRICING_API_BASE')
     || 'https://api-dev.erlume.com.kw';  // DEV backend — the normal default
+
+  // One link, switch environments at runtime (saved in localStorage, reloads).
+  var ENVIRONMENTS = { dev: 'https://api-dev.erlume.com.kw', production: 'https://api.erlume.com.kw' };
+  var ACTIVE_ENV = API_BASE === ENVIRONMENTS.production ? 'production'
+    : (API_BASE === ENVIRONMENTS.dev ? 'dev' : 'custom');
+  function setEnvironment(env) { localStorage.setItem('PRICING_API_BASE', ENVIRONMENTS[env]); location.reload(); }
+  document.addEventListener('DOMContentLoaded', function () {
+    var bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;top:8px;right:8px;z-index:9999;display:flex;align-items:center;gap:6px;font:12px system-ui,sans-serif;background:#fff;border:1px solid #ddd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 4px rgba(0,0,0,.08)';
+    var label = document.createElement('span'); label.textContent = 'backend'; label.style.color = '#888'; bar.appendChild(label);
+    [['dev', 'Dev'], ['production', 'Prod']].forEach(function (pair) {
+      var active = ACTIVE_ENV === pair[0];
+      var b = document.createElement('button');
+      b.textContent = pair[1];
+      b.style.cssText = 'border:0;border-radius:4px;padding:3px 9px;cursor:pointer;font:inherit;' +
+        (active ? (pair[0] === 'production' ? 'background:#b94040;color:#fff' : 'background:#38452d;color:#fff')
+                : 'background:#f1efe8;color:#555');
+      b.onclick = function () { if (!active) setEnvironment(pair[0]); };
+      bar.appendChild(b);
+    });
+    document.body.appendChild(bar);
+  });
+
   var _rawFetch = window.fetch.bind(window);
   function getToken() { return localStorage.getItem('PRICING_TOKEN') || ''; }
   function setToken(t) { if (t) { localStorage.setItem('PRICING_TOKEN', t); } else { localStorage.removeItem('PRICING_TOKEN'); } }
