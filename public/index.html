@@ -949,7 +949,7 @@
   function setEnvironment(env) { localStorage.setItem('PRICING_API_BASE', ENVIRONMENTS[env]); location.reload(); }
   document.addEventListener('DOMContentLoaded', function () {
     var bar = document.createElement('div');
-    bar.style.cssText = 'position:fixed;top:8px;right:8px;z-index:9999;display:flex;align-items:center;gap:6px;font:12px system-ui,sans-serif;background:#fff;border:1px solid #ddd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 4px rgba(0,0,0,.08)';
+    bar.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:9999;display:flex;align-items:center;gap:6px;font:11px system-ui,sans-serif;background:#fff;border:1px solid #ddd;border-radius:6px;padding:3px 6px;box-shadow:0 1px 6px rgba(0,0,0,.12);opacity:.95';
     var label = document.createElement('span'); label.textContent = 'backend'; label.style.color = '#888'; bar.appendChild(label);
     [['dev', 'Dev'], ['production', 'Prod']].forEach(function (pair) {
       var active = ACTIVE_ENV === pair[0];
