@@ -1478,7 +1478,19 @@
         fetch('/api/sellers?q=' + encodeURIComponent(q))
           .then(function (r) { return r.json(); })
           .then(function (d) {
-            var list = (d && d.data) || [];
+            var raw = (d && d.data) || [];
+            // Collapse duplicate seller records for the same contact (same email +
+            // phone) so each person shows once; records with neither stay as-is.
+            var seen = Object.create(null);
+            var list = [];
+            raw.forEach(function (s, idx) {
+              var email = (s.emailAddress || '').toLowerCase().trim();
+              var phone = (s.phoneNumber || '').replace(/[\s\-]/g, '');
+              var key = (email || phone) ? (email + '|' + phone) : ('__' + idx);
+              if (seen[key]) return;
+              seen[key] = true;
+              list.push(s);
+            });
             if (!list.length) { g('qm-results').innerHTML = '<div style="font-size:12px;color:#999;padding:4px 0;">No sellers found.</div>'; return; }
             g('qm-results').innerHTML = list.map(function (s, i) {
               var label = [s.fullName, s.phoneNumber, s.emailAddress].filter(Boolean).join(' · ') || 'Seller';
