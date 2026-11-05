@@ -570,6 +570,36 @@
     text-transform: uppercase; color: var(--charcoal-soft); opacity: 0.75;
   }
   .log-empty { font-size: 0.85rem; color: var(--charcoal-soft); font-style: italic; }
+
+  /* ---- Language toggle + RTL (Arabic) ---- */
+  .nav-link.lang-toggle { font-weight: 600; margin-inline-start: 4px; }
+  html[dir="rtl"] body { font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif; }
+  /* Mirror the left-accent callouts to the right edge in RTL */
+  html[dir="rtl"] .ai-reason,
+  html[dir="rtl"] .payment-detail,
+  html[dir="rtl"] .ultra-note { border-left: 0; border-right: 3px solid var(--gold); }
+  html[dir="rtl"] .comp-note { border-left: 0; border-right: 3px solid var(--green); }
+  html[dir="rtl"] .error-note { border-left: 0; border-right: 3px solid var(--red); }
+  /* Toast slides in from the left in RTL */
+  html[dir="rtl"] .toast-container { right: auto; left: 20px; }
+  html[dir="rtl"] .toast { border-left: 0; border-right: 4px solid var(--gold); transform: translateX(-130%); }
+  html[dir="rtl"] .toast.show { transform: translateX(0); }
+  /* Confidence pill + comp price sit on the opposite side */
+  html[dir="rtl"] .id-box .conf { margin-left: 0; margin-right: 8px; }
+  html[dir="rtl"] .comp-item .c-price { margin-left: 0; margin-right: auto; text-align: left; }
+  /* Tables: flip the text columns, keep numbers on the line-end */
+  html[dir="rtl"] table.factor-table th,
+  html[dir="rtl"] table.factor-table td { text-align: right; }
+  html[dir="rtl"] table.factor-table td.effect { text-align: left; }
+  html[dir="rtl"] table.markdown-table th,
+  html[dir="rtl"] table.markdown-table td { text-align: left; }
+  html[dir="rtl"] table.markdown-table th:first-child,
+  html[dir="rtl"] table.markdown-table td:first-child { text-align: right; }
+  html[dir="rtl"] table.log-table th,
+  html[dir="rtl"] table.log-table td { text-align: right; }
+  html[dir="rtl"] table.log-table td.num,
+  html[dir="rtl"] table.log-table th.num { text-align: left; }
+  html[dir="rtl"] .commission-line { text-align: left; }
 </style>
 </head>
 <body>
@@ -580,8 +610,9 @@
       <img src="/erlume-logo.png" alt="erlume" class="nav-logo">
     </a>
     <div class="nav-links">
-      <button type="button" class="nav-link active" data-tab="consignment">Consignment</button>
-      <button type="button" class="nav-link" data-tab="listing">erlume Listing</button>
+      <button type="button" class="nav-link active" data-tab="consignment" data-i18n="nav.consignment">Consignment</button>
+      <button type="button" class="nav-link" data-tab="listing" data-i18n="nav.listing">erlume Listing</button>
+      <button type="button" class="nav-link lang-toggle" id="lang-toggle" title="العربية / English">عربي</button>
     </div>
   </div>
 </nav>
@@ -589,8 +620,8 @@
 <div class="wrap">
 
   <header class="site-header">
-    <h1 class="brand">AI Bag Pricing</h1>
-    <div class="subtitle">Pre-loved luxury, priced with precision — internal tool</div>
+    <h1 class="brand" data-i18n="header.title">AI Bag Pricing</h1>
+    <div class="subtitle" data-i18n="header.subtitle">Pre-loved luxury, priced with precision — internal tool</div>
   </header>
 
   <div id="js-error-banner" style="display:none;max-width:1120px;margin:0 auto 16px;background:hsl(0 70% 96%);border:1px solid hsl(0 50% 80%);color:hsl(0 70% 40%);padding:10px 16px;border-radius:8px;font-size:0.85rem;"></div>
@@ -600,15 +631,15 @@
 
     <!-- FORM CARD -->
     <section class="card">
-      <h2>Item Details</h2>
+      <h2 data-i18n="card.itemDetails">Item Details</h2>
 
       <div class="field">
-        <label class="field-label">Photos (1–3) — let AI identify the bag</label>
+        <label class="field-label" data-i18n="field.photos">Photos (1–3) — let AI identify the bag</label>
         <input type="file" id="photos" accept="image/jpeg,image/png,image/webp" multiple>
         <div class="previews" id="previews"></div>
-        <div class="hint">A photo of the inside label / serial stamp dramatically improves identification.</div>
+        <div class="hint" data-i18n="hint.photosConsign">A photo of the inside label / serial stamp dramatically improves identification.</div>
         <div class="search-btns" style="margin-top:10px">
-          <button type="button" class="solid" id="btn-identify">Identify from photos</button>
+          <button type="button" class="solid" id="btn-identify" data-i18n="btn.identify">Identify from photos</button>
         </div>
         <div class="id-box" id="id-box">
           <span class="id-name" id="id-name"></span><span class="conf" id="id-conf"></span>
@@ -619,96 +650,96 @@
 
       <div class="row-2">
         <div class="field">
-          <label class="field-label">Brand</label>
-          <input type="text" id="brand" placeholder="e.g. Gucci">
+          <label class="field-label" data-i18n="field.brand">Brand</label>
+          <input type="text" id="brand" placeholder="e.g. Gucci" data-i18n-ph="ph.brand">
         </div>
         <div class="field">
-          <label class="field-label">Model</label>
-          <input type="text" id="model" placeholder="e.g. GG Marmont small">
+          <label class="field-label" data-i18n="field.model">Model</label>
+          <input type="text" id="model" placeholder="e.g. GG Marmont small" data-i18n-ph="ph.model">
         </div>
       </div>
 
       <div class="field">
-        <label class="field-label">Find the market price</label>
-        <input type="text" id="bagquery" placeholder="e.g. Gucci GG Marmont small shoulder bag">
+        <label class="field-label" data-i18n="field.findMarket">Find the market price</label>
+        <input type="text" id="bagquery" placeholder="e.g. Gucci GG Marmont small shoulder bag" data-i18n-ph="ph.bagquery">
         <div class="search-btns">
-          <button type="button" class="solid" id="btn-comps">AI comps</button>
-          <button type="button" onclick="openBagSearch('ebay')">eBay sold prices</button>
+          <button type="button" class="solid" id="btn-comps" data-i18n="btn.aicomps">AI comps</button>
+          <button type="button" onclick="openBagSearch('ebay')" data-i18n="btn.ebay">eBay sold prices</button>
           <button type="button" onclick="openBagSearch('tlc')">The Luxury Closet</button>
           <button type="button" onclick="openBagSearch('vestiaire')">Vestiaire</button>
           <button type="button" onclick="openBagSearch('google')">Google</button>
         </div>
-        <div class="hint muted">AI comps searches eBay and our own price log, then picks the 3 closest matches. Manual buttons open real listings — average 2–3 similar-condition prices and enter below as a resale comp.</div>
+        <div class="hint muted" data-i18n="hint.comps">AI comps searches eBay and our own price log, then picks the 3 closest matches. Manual buttons open real listings — average 2–3 similar-condition prices and enter below as a resale comp.</div>
         <div id="comps-list"></div>
         <div class="hint" id="comps-median" style="display:none"></div>
         <div class="error-note" id="comps-error"></div>
       </div>
 
       <div class="field">
-        <label class="field-label">Pricing basis</label>
+        <label class="field-label" data-i18n="field.basis">Pricing basis</label>
         <div class="radio-group">
           <label class="radio-option active" id="opt-original">
             <input type="radio" name="basis" value="original" checked>
-            <span>I know the original retail price</span>
+            <span data-i18n="basis.original">I know the original retail price</span>
           </label>
           <label class="radio-option" id="opt-comp">
             <input type="radio" name="basis" value="comp">
-            <span>I have a resale comp price (a comparable used bag found online)</span>
+            <span data-i18n="basis.comp">I have a resale comp price (a comparable used bag found online)</span>
           </label>
         </div>
       </div>
 
       <div class="field">
         <label class="field-label" id="price-label">Original retail price (KWD)</label>
-        <input type="number" id="price" min="0" step="0.5" value="400" placeholder="e.g. 400">
+        <input type="number" id="price" min="0" step="0.5" value="400" placeholder="e.g. 400" data-i18n-ph="ph.price">
       </div>
 
       <div class="field">
-        <label class="field-label">Brand tier</label>
+        <label class="field-label" data-i18n="field.tier">Brand tier</label>
         <select id="tier">
-          <option value="ultra">Ultra-luxury (Hermès, Chanel, Louis Vuitton)</option>
-          <option value="premium" selected>Premium (Gucci, Prada, Dior, YSL)</option>
-          <option value="accessible">Accessible (Coach, Michael Kors, Kate Spade)</option>
-          <option value="highstreet">High-street & other</option>
+          <option value="ultra" data-i18n="tier.ultra">Ultra-luxury (Hermès, Chanel, Louis Vuitton)</option>
+          <option value="premium" selected data-i18n="tier.premium">Premium (Gucci, Prada, Dior, YSL)</option>
+          <option value="accessible" data-i18n="tier.accessible">Accessible (Coach, Michael Kors, Kate Spade)</option>
+          <option value="highstreet" data-i18n="tier.highstreet">High-street & other</option>
         </select>
-        <div class="ultra-note" id="ultra-note">Ultra-luxury bags (Chanel, Hermès…) often sell <b>above</b> their original retail price. Run AI comps or check a resale comp with the search buttons — if the comp is higher than the retail-based estimate, switch to "resale comp" and use the comp price instead.</div>
+        <div class="ultra-note" id="ultra-note" data-i18n="note.ultra">Ultra-luxury bags (Chanel, Hermès…) often sell <b>above</b> their original retail price. Run AI comps or check a resale comp with the search buttons — if the comp is higher than the retail-based estimate, switch to "resale comp" and use the comp price instead.</div>
       </div>
 
       <div class="field" id="year-field">
-        <label class="field-label">Year purchased (optional)</label>
-        <input type="number" id="year" min="1980" max="2100" step="1" placeholder="e.g. 2023">
-        <div class="hint muted" id="year-hint">Leave blank if unknown → we'll assume 3–5 years old.</div>
+        <label class="field-label" data-i18n="field.year">Year purchased (optional)</label>
+        <input type="number" id="year" min="1980" max="2100" step="1" placeholder="e.g. 2023" data-i18n-ph="ph.year">
+        <div class="hint muted" id="year-hint" data-i18n="hint.year">Leave blank if unknown → we'll assume 3–5 years old.</div>
       </div>
 
       <div class="field">
-        <label class="field-label">Condition</label>
+        <label class="field-label" data-i18n="field.condition">Condition</label>
         <select id="condition">
-          <option value="like-new">Like New</option>
-          <option value="gently-used" selected>Gently Used</option>
-          <option value="fair-worn">Fair or Worn</option>
+          <option value="like-new" data-i18n="cond.likeNew">Like New</option>
+          <option value="gently-used" selected data-i18n="cond.gentlyUsed">Gently Used</option>
+          <option value="fair-worn" data-i18n="cond.fairWorn">Fair or Worn</option>
         </select>
       </div>
 
       <div class="field">
-        <label class="field-label">Pickup</label>
+        <label class="field-label" data-i18n="field.pickup">Pickup</label>
         <select id="pickup">
-          <option value="0">Drop-off (free)</option>
-          <option value="3" selected>Pickup — own driver (+3 KWD)</option>
-          <option value="5">Pickup — 3rd party (+5 KWD)</option>
+          <option value="0" data-i18n="pickup.dropoff">Drop-off (free)</option>
+          <option value="3" selected data-i18n="pickup.own">Pickup — own driver (+3 KWD)</option>
+          <option value="5" data-i18n="pickup.third">Pickup — 3rd party (+5 KWD)</option>
         </select>
       </div>
 
       <div class="field">
-        <label class="field-label">Cleaning cost (KWD)</label>
+        <label class="field-label" data-i18n="field.cleaning">Cleaning cost (KWD)</label>
         <input type="number" id="cleaning" min="0" step="0.5" value="0">
       </div>
 
       <div class="field">
         <label class="toggle-note" id="payment-toggle-label">
           <input type="checkbox" id="payment-toggle">
-          <span>Payment method info (does not affect calculation)</span>
+          <span data-i18n="toggle.payment">Payment method info (does not affect calculation)</span>
         </label>
-        <div class="payment-detail" id="payment-detail">
+        <div class="payment-detail" id="payment-detail" data-i18n="payment.detail">
           INTERNAL ONLY — never shown to sellers or buyers as a "payment fee". The 2.5% "Logistics &amp; handling" line actually covers our MyFatoorah costs: KNET = flat 200 fils per transaction, Visa/Mastercard/Google Pay/Samsung Pay = 2.5%, Apple Pay KNET = 220 fils. It covers the worst case (cards); KNET sales cost far less, so the unused buffer becomes extra margin.
         </div>
       </div>
@@ -718,55 +749,55 @@
 
     <!-- RESULTS CARD -->
     <section class="card results-card">
-      <h2>Pricing Result</h2>
+      <h2 data-i18n="card.result">Pricing Result</h2>
 
       <div class="listing-hero">
-        <div class="label">Listing Price</div>
+        <div class="label" data-i18n="res.listingPrice">Listing Price</div>
         <div class="amount"><span id="listing-price">0.000</span><small>KWD</small></div>
         <div id="accept-badge" class="badge accept">Accept — profitable</div>
       </div>
 
-      <div class="comp-note" id="comp-note">
+      <div class="comp-note" id="comp-note" data-i18n="compNote">
         Using a resale comp price directly as market value — no retention curve or condition deduction is applied, since a comparable used listing already reflects real-world used condition and depreciation.
       </div>
 
       <div class="ultra-note" id="server-warning"></div>
 
       <div class="breakdown">
-        <div class="brow"><span class="k">Estimated market value</span><span class="v" id="row-market">0.000</span></div>
-        <div class="brow"><span class="k">+ Pickup</span><span class="v" id="row-pickup">0.000</span></div>
-        <div class="brow"><span class="k">+ Cleaning</span><span class="v" id="row-cleaning">0.000</span></div>
-        <div class="brow"><span class="k">+ Logistics &amp; handling (2.5%)</span><span class="v" id="row-gateway">0.000</span></div>
-        <div class="brow total"><span class="k">= Listing price</span><span class="v" id="row-total">0.000</span></div>
+        <div class="brow"><span class="k" data-i18n="row.market">Estimated market value</span><span class="v" id="row-market">0.000</span></div>
+        <div class="brow"><span class="k" data-i18n="row.pickup">+ Pickup</span><span class="v" id="row-pickup">0.000</span></div>
+        <div class="brow"><span class="k" data-i18n="row.cleaning">+ Cleaning</span><span class="v" id="row-cleaning">0.000</span></div>
+        <div class="brow"><span class="k" data-i18n="row.gateway">+ Logistics &amp; handling (2.5%)</span><span class="v" id="row-gateway">0.000</span></div>
+        <div class="brow total"><span class="k" data-i18n="row.total">= Listing price</span><span class="v" id="row-total">0.000</span></div>
       </div>
 
       <div class="payout-box">
-        <div><div class="k">Seller payout</div></div>
+        <div><div class="k" data-i18n="payout.seller">Seller payout</div></div>
         <div class="v" id="seller-payout">0.000 KWD</div>
       </div>
-      <div class="commission-line">erlume commission: <span id="commission-amount">0.000</span> KWD (<span id="commission-pct">20</span>%, min <span id="commission-floor">10</span> KWD)</div>
+      <div class="commission-line"><span data-i18n="commission.prefix">erlume commission:</span> <span id="commission-amount">0.000</span> KWD (<span id="commission-pct">20</span><span data-i18n="commission.suffix">%, min</span> <span id="commission-floor">10</span> KWD)</div>
 
-      <h3 class="section-title">Markdown Schedule (if unsold)</h3>
+      <h3 class="section-title" data-i18n="section.markdown">Markdown Schedule (if unsold)</h3>
       <table class="markdown-table">
         <thead>
           <tr>
-            <th>Timing</th>
-            <th>Discount</th>
-            <th>New listing</th>
-            <th>Commission</th>
-            <th>Payout</th>
+            <th data-i18n="th.timing">Timing</th>
+            <th data-i18n="th.discount">Discount</th>
+            <th data-i18n="th.newListing">New listing</th>
+            <th data-i18n="th.commission">Commission</th>
+            <th data-i18n="th.payout">Payout</th>
           </tr>
         </thead>
         <tbody id="markdown-body"></tbody>
       </table>
 
       <div class="search-btns" style="margin-top:20px">
-        <button type="button" class="solid" id="btn-save">Save to price log</button>
+        <button type="button" class="solid" id="btn-save" data-i18n="btn.save">Save to price log</button>
       </div>
       <div class="hint" id="save-msg"></div>
 
       <div class="search-btns" style="margin-top:16px">
-        <button type="button" class="solid" id="btn-open-quote">Generate seller quote</button>
+        <button type="button" class="solid" id="btn-open-quote" data-i18n="btn.openQuote">Generate seller quote</button>
       </div>
     </section>
 
@@ -777,15 +808,15 @@
   <div id="tab-listing" class="tab-panel" style="display:none">
     <div class="grid">
       <section class="card">
-        <h2>Item Categorization</h2>
+        <h2 data-i18n="card.categorization">Item Categorization</h2>
 
         <div class="field">
-          <label class="field-label">Photos (1–3) — let AI identify the bag</label>
+          <label class="field-label" data-i18n="field.photos">Photos (1–3) — let AI identify the bag</label>
           <input type="file" id="l-photos" accept="image/jpeg,image/png,image/webp" multiple>
           <div class="previews" id="l-previews"></div>
-          <div class="hint">A photo of the inside label / serial stamp improves identification.</div>
+          <div class="hint" data-i18n="hint.photosListing">A photo of the inside label / serial stamp improves identification.</div>
           <div class="search-btns" style="margin-top:10px">
-            <button type="button" class="solid" id="l-identify">Identify from photos</button>
+            <button type="button" class="solid" id="l-identify" data-i18n="btn.identify">Identify from photos</button>
           </div>
           <div class="id-box" id="l-idbox">
             <span class="id-name" id="l-idname"></span><span class="conf" id="l-idconf"></span>
@@ -795,17 +826,17 @@
         </div>
 
         <div class="cat-grid">
-          <div class="field"><label class="field-label">Brand</label><input type="text" id="l-brand" placeholder="e.g. Chanel"></div>
-          <div class="field"><label class="field-label">Model</label><input type="text" id="l-model" placeholder="e.g. Classic Flap"></div>
+          <div class="field"><label class="field-label" data-i18n="field.brand">Brand</label><input type="text" id="l-brand" placeholder="e.g. Chanel" data-i18n-ph="ph.lbrand"></div>
+          <div class="field"><label class="field-label" data-i18n="field.model">Model</label><input type="text" id="l-model" placeholder="e.g. Classic Flap" data-i18n-ph="ph.lmodel"></div>
         </div>
         <div class="cat-grid">
-          <div class="field"><label class="field-label">Starting price (KWD)</label><input type="number" id="l-starting" min="0" step="0.5" placeholder="what we paid / base"></div>
-          <div class="field"><label class="field-label">Brand tier (weighted low)</label>
+          <div class="field"><label class="field-label" data-i18n="field.startingPrice">Starting price (KWD)</label><input type="number" id="l-starting" min="0" step="0.5" placeholder="what we paid / base" data-i18n-ph="ph.lstarting"></div>
+          <div class="field"><label class="field-label" data-i18n="field.brandTierLow">Brand tier (weighted low)</label>
             <select id="l-brandtier">
-              <option value="ultra">Ultra-luxury</option>
-              <option value="premium" selected>Premium</option>
-              <option value="accessible">Accessible</option>
-              <option value="fastfashion">Fast Fashion</option>
+              <option value="ultra" data-i18n="ltier.ultra">Ultra-luxury</option>
+              <option value="premium" selected data-i18n="ltier.premium">Premium</option>
+              <option value="accessible" data-i18n="ltier.accessible">Accessible</option>
+              <option value="fastfashion" data-i18n="ltier.fastfashion">Fast Fashion</option>
             </select>
           </div>
         </div>
@@ -817,75 +848,75 @@
              toward consignment instead of a hard block, since "fastfashion" is
              really "brand not recognized" and can include a genuinely
              exceptional unbranded/artisan piece worth buying anyway. -->
-        <div class="ultra-note" id="l-fastfashion-note">
+        <div class="ultra-note" id="l-fastfashion-note" data-i18n="note.fastfashion">
           <b>erlume usually doesn't buy fastfashion/unrecognized-brand items outright</b> — consignment already prices these fairly and the seller carries the holding risk, not erlume. Continue only if this specific piece has real rare, vintage, or craftsmanship value that justifies buying it directly.
         </div>
         <div class="cat-grid">
-          <div class="field"><label class="field-label">Rare</label>
-            <select id="l-rare"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
-          <div class="field"><label class="field-label">Vintage</label>
+          <div class="field"><label class="field-label" data-i18n="field.rare">Rare</label>
+            <select id="l-rare"><option value="no" selected data-i18n="opt.no">No</option><option value="yes" data-i18n="opt.yes">Yes</option></select></div>
+          <div class="field"><label class="field-label" data-i18n="field.vintage">Vintage</label>
             <select id="l-vintage">
-              <option value="no" selected>Not vintage</option>
-              <option value="dated">Vintage — dated / lower demand</option>
-              <option value="desirable">Vintage — desirable / iconic</option>
+              <option value="no" selected data-i18n="vintage.no">Not vintage</option>
+              <option value="dated" data-i18n="vintage.dated">Vintage — dated / lower demand</option>
+              <option value="desirable" data-i18n="vintage.desirable">Vintage — desirable / iconic</option>
             </select></div>
         </div>
         <div class="cat-grid">
-          <div class="field"><label class="field-label">Trendy</label>
-            <select id="l-trendy"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
-          <div class="field"><label class="field-label">Seasonal</label>
-            <select id="l-seasonal"><option value="n/a" selected>N/A</option><option value="in-season">In season</option><option value="off-season">Off season</option></select></div>
+          <div class="field"><label class="field-label" data-i18n="field.trendy">Trendy</label>
+            <select id="l-trendy"><option value="no" selected data-i18n="opt.no">No</option><option value="yes" data-i18n="opt.yes">Yes</option></select></div>
+          <div class="field"><label class="field-label" data-i18n="field.seasonal">Seasonal</label>
+            <select id="l-seasonal"><option value="n/a" selected data-i18n="seasonal.na">N/A</option><option value="in-season" data-i18n="seasonal.in">In season</option><option value="off-season" data-i18n="seasonal.off">Off season</option></select></div>
         </div>
         <div class="cat-grid">
-          <div class="field"><label class="field-label">Material (quality)</label>
-            <select id="l-material"><option value="premium">Premium</option><option value="standard" selected>Standard</option><option value="low">Low</option></select></div>
-          <div class="field"><label class="field-label">Condition</label>
-            <select id="l-condition"><option value="like-new">Like New</option><option value="gently-used" selected>Gently Used</option><option value="fair-worn">Fair or Worn</option></select></div>
+          <div class="field"><label class="field-label" data-i18n="field.materialQuality">Material (quality)</label>
+            <select id="l-material"><option value="premium" data-i18n="mat.premium">Premium</option><option value="standard" selected data-i18n="mat.standard">Standard</option><option value="low" data-i18n="mat.low">Low</option></select></div>
+          <div class="field"><label class="field-label" data-i18n="field.condition">Condition</label>
+            <select id="l-condition"><option value="like-new" data-i18n="cond.likeNew">Like New</option><option value="gently-used" selected data-i18n="cond.gentlyUsed">Gently Used</option><option value="fair-worn" data-i18n="cond.fairWorn">Fair or Worn</option></select></div>
         </div>
         <div class="cat-grid">
-          <div class="field"><label class="field-label">Delivery fee (KWD)</label><input type="number" id="l-delivery" min="0" step="0.5" value="0"></div>
-          <div class="field"><label class="field-label">Cleaning cost (KWD)</label><input type="number" id="l-cleaning" min="0" step="0.5" value="0"></div>
+          <div class="field"><label class="field-label" data-i18n="field.delivery">Delivery fee (KWD)</label><input type="number" id="l-delivery" min="0" step="0.5" value="0"></div>
+          <div class="field"><label class="field-label" data-i18n="field.cleaning">Cleaning cost (KWD)</label><input type="number" id="l-cleaning" min="0" step="0.5" value="0"></div>
         </div>
-        <div class="field"><label class="field-label">Comp average (KWD, optional)</label>
-          <input type="number" id="l-compavg" min="0" step="0.5" placeholder="informs where AI lands in the band">
+        <div class="field"><label class="field-label" data-i18n="field.compAvgOpt">Comp average (KWD, optional)</label>
+          <input type="number" id="l-compavg" min="0" step="0.5" placeholder="informs where AI lands in the band" data-i18n-ph="ph.lcompavg">
           <div class="search-btns" style="margin-top:8px">
-            <button type="button" class="solid" id="l-comps">AI comps → average</button>
+            <button type="button" class="solid" id="l-comps" data-i18n="btn.lcomps">AI comps → average</button>
           </div>
           <div id="l-complist"></div>
-          <div class="hint muted" id="l-comphint">Pulls eBay + your price log and averages the 3 closest, or type it manually.</div>
+          <div class="hint muted" id="l-comphint" data-i18n="hint.lcomp">Pulls eBay + your price log and averages the 3 closest, or type it manually.</div>
         </div>
         <div class="cta-row">
-          <button type="button" class="btn" id="l-suggest">Suggest price (AI)</button>
-          <button type="button" class="btn ghost" id="l-calc">Calculate (formula only)</button>
+          <button type="button" class="btn" id="l-suggest" data-i18n="btn.lsuggest">Suggest price (AI)</button>
+          <button type="button" class="btn ghost" id="l-calc" data-i18n="btn.lcalc">Calculate (formula only)</button>
         </div>
-        <div class="hint muted">“Suggest” lets AI pick within the band and explain why. “Calculate” uses the formula midpoint — no AI, instant.</div>
+        <div class="hint muted" data-i18n="hint.lcta">“Suggest” lets AI pick within the band and explain why. “Calculate” uses the formula midpoint — no AI, instant.</div>
         <div class="error-note" id="l-error"></div>
       </section>
 
       <section class="card results-card">
-        <h2>Suggested Price</h2>
+        <h2 data-i18n="card.suggestedPrice">Suggested Price</h2>
         <div class="listing-hero">
-          <div class="label">Suggested listing price</div>
+          <div class="label" data-i18n="res.suggestedListing">Suggested listing price</div>
           <div class="amount"><span id="l-listing">—</span><small>KWD</small></div>
           <div id="l-badge" class="badge accept" style="display:none"></div>
         </div>
         <div class="band">
-          <span class="lo">band <span id="l-low">—</span></span>
+          <span class="lo"><span data-i18n="band.prefix">band</span> <span id="l-low">—</span></span>
           <span class="arrow">→</span>
           <span class="hi"><span id="l-high">—</span> KWD</span>
         </div>
         <div class="ai-reason" id="l-reason" style="display:none"></div>
         <div class="field" id="l-finalwrap" style="display:none">
-          <label class="field-label">Final item value (KWD) — edit to override, price updates live</label>
+          <label class="field-label" data-i18n="field.finalValue">Final item value (KWD) — edit to override, price updates live</label>
           <input type="number" id="l-finalvalue" min="0" step="0.5">
           <div class="hint muted" id="l-finalhint"></div>
         </div>
         <div class="breakdown">
-          <div class="brow"><span class="k">Category multiplier</span><span class="v" id="l-mult">—</span></div>
-          <div class="brow"><span class="k">Item value (in band)</span><span class="v" id="l-market">—</span></div>
-          <div class="brow"><span class="k">+ Delivery</span><span class="v" id="l-pdelivery">—</span></div>
-          <div class="brow"><span class="k">+ Cleaning</span><span class="v" id="l-pcleaning">—</span></div>
-          <div class="brow total"><span class="k">= Listing price</span><span class="v" id="l-ptotal">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.catMultiplier">Category multiplier</span><span class="v" id="l-mult">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.itemValueBand">Item value (in band)</span><span class="v" id="l-market">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.plusDelivery">+ Delivery</span><span class="v" id="l-pdelivery">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.plusCleaning">+ Cleaning</span><span class="v" id="l-pcleaning">—</span></div>
+          <div class="brow total"><span class="k" data-i18n="row.listingPriceEq">= Listing price</span><span class="v" id="l-ptotal">—</span></div>
         </div>
         <!-- erlume Listing has no consignor — erlume already owns the bag, so
              the shared formula's sellerPayout/erlumeCut split (built for a
@@ -893,16 +924,16 @@
              here. Real profit is simply what the buyer eventually pays minus
              what erlume paid to acquire the bag and the real costs it covers. -->
         <div class="breakdown">
-          <div class="brow"><span class="k">Listing price (buyer pays)</span><span class="v" id="l-profit-listing">—</span></div>
-          <div class="brow"><span class="k">− Starting price (what we paid)</span><span class="v" id="l-profit-starting">—</span></div>
-          <div class="brow"><span class="k">− Delivery</span><span class="v" id="l-profit-delivery">—</span></div>
-          <div class="brow"><span class="k">− Cleaning</span><span class="v" id="l-profit-cleaning">—</span></div>
-          <div class="brow total"><span class="k">= erlume profit</span><span class="v" id="l-profit-total">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.listingBuyerPays">Listing price (buyer pays)</span><span class="v" id="l-profit-listing">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.minusStarting">− Starting price (what we paid)</span><span class="v" id="l-profit-starting">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.minusDelivery">− Delivery</span><span class="v" id="l-profit-delivery">—</span></div>
+          <div class="brow"><span class="k" data-i18n="row.minusCleaning">− Cleaning</span><span class="v" id="l-profit-cleaning">—</span></div>
+          <div class="brow total"><span class="k" data-i18n="row.erlumeProfit">= erlume profit</span><span class="v" id="l-profit-total">—</span></div>
         </div>
         <div class="commission-line" id="l-profit-pct">—% return on starting price</div>
         <div id="l-factors" class="md"></div>
         <div class="cta-row" style="margin-top:18px">
-          <button type="button" class="btn" id="l-save">Save to price log</button>
+          <button type="button" class="btn" id="l-save" data-i18n="btn.lsave">Save to price log</button>
         </div>
       </section>
     </div>
@@ -910,11 +941,11 @@
 
   <!-- PRICE LOG (shared — shows on both tabs) -->
   <section class="card log-card">
-    <h2>Price Log</h2>
-    <div id="log-table"><span class="log-empty">No bags priced yet.</span></div>
+    <h2 data-i18n="card.priceLog">Price Log</h2>
+    <div id="log-table"><span class="log-empty" data-i18n="log.empty">No bags priced yet.</span></div>
   </section>
 
-  <div class="footnote">Estimates only — final price confirmed after physical inspection.</div>
+  <div class="footnote" data-i18n="footnote">Estimates only — final price confirmed after physical inspection.</div>
 
 </div>
 
@@ -923,7 +954,7 @@
     <div class="footer-brand">
       <img src="/erlume-logo.png" alt="erlume">
     </div>
-    <div class="footer-note">Pre-loved luxury, priced with precision — internal pricing tool · Kuwait</div>
+    <div class="footer-note" data-i18n="footer.note">Pre-loved luxury, priced with precision — internal pricing tool · Kuwait</div>
   </div>
 </footer>
 
@@ -931,6 +962,245 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (n) { return (n == null || isNaN(n)) ? '—' : Number(n).toFixed(3); };
+
+  // ── i18n (staff UI only) ────────────────────────────────────────────────────
+  // The INTERFACE toggles between English and Arabic. Everything the backend
+  // produces — the generated seller quote (Zoho/PDF), the pricing numbers, and
+  // all /api/* calls — is untouched; this only swaps on-screen labels and sets
+  // the page direction. Static markup is tagged with data-i18n / data-i18n-ph
+  // and translated from AR below; strings built in JS come from STR[lang].
+  var LANG = (function () { try { return localStorage.getItem('PRICING_LANG') || 'en'; } catch (e) { return 'en'; } })();
+
+  // Arabic for every static data-i18n / data-i18n-ph key. English is kept in the
+  // markup itself (cached on first switch), so going back to English is lossless.
+  var AR = {
+    'nav.consignment': 'بيع بالعمولة', 'nav.listing': 'قوائم erlume',
+    'header.title': 'تسعير الحقائب بالذكاء الاصطناعي',
+    'header.subtitle': 'فخامة مُستعمَلة، مُسعّرة بدقة — أداة داخلية',
+    'card.itemDetails': 'تفاصيل القطعة',
+    'field.photos': 'الصور (1–3) — دع الذكاء الاصطناعي يتعرّف على الحقيبة',
+    'hint.photosConsign': 'صورة للملصق الداخلي / ختم الرقم التسلسلي تُحسّن التعرّف بشكل كبير.',
+    'hint.photosListing': 'صورة للملصق الداخلي / ختم الرقم التسلسلي تُحسّن التعرّف.',
+    'btn.identify': 'التعرّف من الصور',
+    'field.brand': 'الماركة', 'field.model': 'الموديل',
+    'ph.brand': 'مثال: Gucci', 'ph.model': 'مثال: GG Marmont small',
+    'ph.lbrand': 'مثال: Chanel', 'ph.lmodel': 'مثال: Classic Flap',
+    'field.findMarket': 'ابحث عن سعر السوق',
+    'ph.bagquery': 'مثال: Gucci GG Marmont small shoulder bag',
+    'btn.aicomps': 'مقارنات بالذكاء الاصطناعي', 'btn.ebay': 'أسعار eBay المُباعة',
+    'hint.comps': 'تبحث المقارنات الذكية في eBay وسجلّ أسعارنا، ثم تختار أقرب 3 نتائج. الأزرار اليدوية تفتح إعلانات حقيقية — خذ متوسط سعرين أو ثلاثة بحالة مماثلة وأدخلها أدناه كمقارنة إعادة بيع.',
+    'field.basis': 'أساس التسعير',
+    'basis.original': 'أعرف سعر البيع الأصلي بالتجزئة',
+    'basis.comp': 'لديّ سعر مقارنة لإعادة البيع (حقيبة مستعملة مماثلة وُجدت على الإنترنت)',
+    'ph.price': 'مثال: 400',
+    'field.tier': 'فئة الماركة',
+    'tier.ultra': 'فائقة الفخامة (Hermès، Chanel، Louis Vuitton)',
+    'tier.premium': 'راقية (Gucci، Prada، Dior، YSL)',
+    'tier.accessible': 'متوسطة (Coach، Michael Kors، Kate Spade)',
+    'tier.highstreet': 'تجارية وأخرى',
+    'note.ultra': 'الحقائب فائقة الفخامة (Chanel، Hermès…) غالبًا ما تُباع بسعر أعلى من سعرها الأصلي. شغّل المقارنات الذكية أو تحقّق من سعر مقارنة بأزرار البحث — إذا كان سعر المقارنة أعلى من التقدير المبني على سعر التجزئة، فانتقل إلى «مقارنة إعادة البيع» واستخدم سعر المقارنة بدلًا من ذلك.',
+    'field.year': 'سنة الشراء (اختياري)', 'ph.year': 'مثال: 2023',
+    'hint.year': 'اترك الحقل فارغًا إذا كانت غير معروفة ← سنفترض عمرًا من 3 إلى 5 سنوات.',
+    'field.condition': 'الحالة',
+    'cond.likeNew': 'كالجديدة', 'cond.gentlyUsed': 'مستعملة بعناية', 'cond.fairWorn': 'مقبولة أو مُستهلَكة',
+    'field.pickup': 'الاستلام',
+    'pickup.dropoff': 'تسليم باليد (مجاني)', 'pickup.own': 'استلام — سائق خاص (+3 KWD)', 'pickup.third': 'استلام — طرف ثالث (+5 KWD)',
+    'field.cleaning': 'تكلفة التنظيف (KWD)',
+    'toggle.payment': 'معلومات طريقة الدفع (لا تؤثر على الحساب)',
+    'payment.detail': 'للاستخدام الداخلي فقط — لا تُعرض أبدًا للبائعين أو المشترين كـ«رسوم دفع». بند «الخدمات اللوجستية والمناولة» بنسبة 2.5٪ يغطي فعليًا تكاليف MyFatoorah لدينا: KNET = 200 فلس ثابتة لكل عملية، وVisa/Mastercard/Google Pay/Samsung Pay = 2.5٪، وApple Pay عبر KNET = 220 فلسًا. يغطي أسوأ الحالات (البطاقات)؛ ومبيعات KNET تكلّف أقل بكثير، فيتحوّل الفائض غير المستخدم إلى هامش ربح إضافي.',
+    'card.result': 'نتيجة التسعير', 'res.listingPrice': 'سعر البيع',
+    'compNote': 'يُستخدم سعر مقارنة إعادة البيع مباشرةً كقيمة سوقية — دون تطبيق منحنى الاحتفاظ أو خصم الحالة، لأن إعلان قطعة مستعملة مماثلة يعكس بالفعل الحالة والاستهلاك الواقعيين.',
+    'row.market': 'القيمة السوقية المُقدّرة', 'row.pickup': '+ الاستلام', 'row.cleaning': '+ التنظيف',
+    'row.gateway': '+ الخدمات اللوجستية والمناولة (2.5٪)', 'row.total': '= سعر البيع',
+    'payout.seller': 'مستحقات البائع',
+    'commission.prefix': 'عمولة erlume:', 'commission.suffix': '٪، بحد أدنى',
+    'section.markdown': 'جدول التخفيضات (إن لم تُبَع)',
+    'th.timing': 'التوقيت', 'th.discount': 'الخصم', 'th.newListing': 'السعر الجديد', 'th.commission': 'العمولة', 'th.payout': 'المستحقات',
+    'btn.save': 'حفظ في سجلّ الأسعار', 'btn.openQuote': 'إنشاء عرض سعر للبائع',
+    'card.categorization': 'تصنيف القطعة',
+    'field.startingPrice': 'سعر البداية (KWD)', 'ph.lstarting': 'ما دفعناه / الأساس',
+    'field.brandTierLow': 'فئة الماركة (ذات وزن منخفض)',
+    'ltier.ultra': 'فائقة الفخامة', 'ltier.premium': 'راقية', 'ltier.accessible': 'متوسطة', 'ltier.fastfashion': 'موضة سريعة',
+    'note.fastfashion': 'عادةً لا تشتري erlume قطع الموضة السريعة/الماركات غير المعروفة مباشرةً — فالبيع بالعمولة يُسعّرها بإنصاف والبائع يتحمّل مخاطر الاحتفاظ، لا erlume. تابع فقط إذا كانت لهذه القطعة تحديدًا قيمة نادرة أو كلاسيكية أو حرفية حقيقية تبرّر شراءها مباشرةً.',
+    'field.rare': 'نادرة', 'opt.no': 'لا', 'opt.yes': 'نعم',
+    'field.vintage': 'كلاسيكية (فينتدج)',
+    'vintage.no': 'ليست كلاسيكية', 'vintage.dated': 'كلاسيكية — قديمة / طلب منخفض', 'vintage.desirable': 'كلاسيكية — مرغوبة / أيقونية',
+    'field.trendy': 'رائجة', 'field.seasonal': 'موسمية',
+    'seasonal.na': 'غير منطبق', 'seasonal.in': 'في الموسم', 'seasonal.off': 'خارج الموسم',
+    'field.materialQuality': 'الخامة (الجودة)',
+    'mat.premium': 'ممتازة', 'mat.standard': 'قياسية', 'mat.low': 'منخفضة',
+    'field.delivery': 'رسوم التوصيل (KWD)', 'field.compAvgOpt': 'متوسط المقارنات (KWD، اختياري)',
+    'ph.lcompavg': 'يُرشد الذكاء الاصطناعي إلى موضعه ضمن النطاق',
+    'btn.lcomps': 'مقارنات ذكية ← المتوسط',
+    'hint.lcomp': 'تسحب من eBay + سجلّ أسعارك وتأخذ متوسط أقرب 3، أو اكتبه يدويًا.',
+    'btn.lsuggest': 'اقترح السعر (ذكاء اصطناعي)', 'btn.lcalc': 'احسب (الصيغة فقط)',
+    'hint.lcta': '«اقترح» يدع الذكاء الاصطناعي يختار ضمن النطاق ويشرح السبب. «احسب» يستخدم منتصف الصيغة — دون ذكاء اصطناعي، فوري.',
+    'card.suggestedPrice': 'السعر المقترح', 'res.suggestedListing': 'سعر البيع المقترح', 'band.prefix': 'النطاق',
+    'field.finalValue': 'القيمة النهائية للقطعة (KWD) — عدّلها للتجاوز، ويتحدّث السعر مباشرةً',
+    'row.catMultiplier': 'مُضاعِف الفئة', 'row.itemValueBand': 'قيمة القطعة (ضمن النطاق)',
+    'row.plusDelivery': '+ التوصيل', 'row.plusCleaning': '+ التنظيف', 'row.listingPriceEq': '= سعر البيع',
+    'row.listingBuyerPays': 'سعر البيع (يدفعه المشتري)', 'row.minusStarting': '− سعر البداية (ما دفعناه)',
+    'row.minusDelivery': '− التوصيل', 'row.minusCleaning': '− التنظيف', 'row.erlumeProfit': '= ربح erlume',
+    'btn.lsave': 'حفظ في سجلّ الأسعار',
+    'card.priceLog': 'سجلّ الأسعار', 'log.empty': 'لم تُسعّر أي حقيبة بعد.',
+    'footnote': 'تقديرات فقط — يُؤكَّد السعر النهائي بعد المعاينة الفعلية.',
+    'footer.note': 'فخامة مُستعمَلة، مُسعّرة بدقة — أداة تسعير داخلية · الكويت'
+  };
+
+  // Strings built in JS (need both languages). {n}/{m}/{lo}/{hi} are filled in.
+  var STR = {
+    en: {
+      'btn.identify': 'Identify from photos', 'btn.aicomps': 'AI comps', 'btn.lcomps': 'AI comps → average',
+      'btn.lsuggest': 'Suggest price (AI)', 'btn.lcalc': 'Calculate (formula only)',
+      'busy.identifying': 'Identifying…', 'busy.searching': 'Searching…', 'busy.thinking': 'Thinking…', 'busy.calculating': 'Calculating…',
+      'err.uploadPhoto': 'Upload at least one photo first.',
+      'err.brandModelReq': 'Brand and model are required — identify from photos or type them.',
+      'err.brandModelComps': 'Brand and model are required for comps — identify or type them.',
+      'err.startingFirst': 'Enter a starting price first.',
+      'id.unidentified': 'Unidentified',
+      'id.lowConfConsign': 'Low confidence — confirm brand & model before continuing. ',
+      'id.lowConfListing': 'Low confidence — confirm before continuing. ',
+      'comps.none': 'No API comps found — use the manual search buttons above.',
+      'comps.avgPrefix': 'Average of comps: ', 'comps.appliedBelow': ' — applied as resale comp below.',
+      'comps.oneOnly': ' (only 1 comp — treat with caution).',
+      'comps.ebayErrPrefix': 'eBay error: ',
+      'comps.ebayNA': 'eBay API not configured — showing internal price log + manual links only.',
+      'lcomp.avgPrefix': 'Average of ', 'lcomp.avgMid': ' comps: ', 'lcomp.avgSuffix': ' (filled in above).',
+      'lcomp.none': 'No comps found — type a value manually or leave blank.',
+      'badge.accept': 'Accept — profitable', 'badge.decline': 'Decline — below the 100 KWD minimum',
+      'badge.above': 'Above 100 KWD minimum', 'badge.below': 'Below 100 KWD minimum',
+      'md.after': 'After {n} months',
+      'label.priceOriginal': 'Original retail price (KWD)',
+      'label.priceComp': 'Resale comp price (KWD) — price of a comparable used bag found online',
+      'reason.aiPrefix': 'AI: ',
+      'finalhint': 'Allowed band: {lo} – {hi} KWD. Values outside snap to the band.',
+      'profitpct.suffix': '% return on starting price',
+      'factor.title': 'How the attributes shaped the price',
+      'factor.noEffect': 'no effect', 'factor.diminishing': 'Diminishing returns (stacking cap)',
+      'factor.th.attribute': 'Attribute', 'factor.th.value': 'Value', 'factor.th.effect': 'Effect', 'factor.th.amount': 'Amount', 'factor.th.running': 'Running',
+      'factor.startingPrice': 'Starting price', 'factor.bandMid': 'Band midpoint (×{m})', 'factor.itemValueUsed': '→ Item value used',
+      'toast.saved': 'Saved to price log', 'toast.saveFailedPrefix': 'Save failed: ',
+      'toast.calcFirst': 'Calculate a price first', 'toast.runFirst': 'Run “Suggest” or “Calculate” first',
+      'toast.entryDeleted': 'Entry deleted', 'toast.delFailedPrefix': 'Could not delete: ',
+      'toast.dlFailedPrefix': 'Download failed: ',
+      'confirm.delTitle': 'Delete entry?', 'confirm.delText': 'This removes it from the price log permanently.',
+      'confirm.del': 'Delete', 'confirm.keep': 'Keep',
+      'rm.generateQuote': 'Generate quote', 'rm.delete': 'Delete',
+      'log.empty': 'No bags priced yet.',
+      'log.th.date': 'Date', 'log.th.bag': 'Bag', 'log.th.condition': 'Condition', 'log.th.retail': 'Retail',
+      'log.th.compAvg': 'Comp avg.', 'log.th.listing': 'Listing', 'log.th.payoutProfit': 'Payout / Profit',
+      'tag.quote': 'Quote', 'tag.profit': 'profit', 'tag.payout': 'payout',
+      'qm.title': 'Generate seller quote', 'qm.bag': 'Bag', 'qm.payoutPrefix': 'Payout ', 'qm.commissionMid': ' · commission ',
+      'qm.existing': 'Existing seller', 'qm.new': 'New contact',
+      'qm.searchPh': 'Search seller by name, phone, or email', 'qm.namePh': 'Name', 'qm.emailPh': 'Email (optional)', 'qm.phonePh': 'Phone (optional)',
+      'qm.generate': 'Generate quote', 'qm.generating': 'Creating quote…',
+      'qm.noSellers': 'No sellers found.', 'qm.searchFailed': 'Search failed.', 'qm.selectedPrefix': 'Selected: ', 'qm.seller': 'Seller',
+      'qm.enterBag': 'Enter the bag name', 'qm.selectSeller': 'Search and select a seller', 'qm.enterContact': 'Enter contact details',
+      'qm.createdPrefix': 'Quote ', 'qm.createdMid': ' created — ', 'qm.openZoho': 'open in Zoho', 'qm.downloadPdf': 'download PDF',
+      'qm.linkedSeller': ' · linked to seller', 'qm.quoteCreated': 'Quote created', 'qm.quoteFailedPrefix': 'Quote failed: ',
+      'qm.noPriceToQuote': 'No price to quote — calculate first'
+    },
+    ar: {
+      'btn.identify': 'التعرّف من الصور', 'btn.aicomps': 'مقارنات بالذكاء الاصطناعي', 'btn.lcomps': 'مقارنات ذكية ← المتوسط',
+      'btn.lsuggest': 'اقترح السعر (ذكاء اصطناعي)', 'btn.lcalc': 'احسب (الصيغة فقط)',
+      'busy.identifying': 'جارٍ التعرّف…', 'busy.searching': 'جارٍ البحث…', 'busy.thinking': 'جارٍ التفكير…', 'busy.calculating': 'جارٍ الحساب…',
+      'err.uploadPhoto': 'ارفع صورة واحدة على الأقل أولًا.',
+      'err.brandModelReq': 'الماركة والموديل مطلوبان — تعرّف من الصور أو اكتبهما.',
+      'err.brandModelComps': 'الماركة والموديل مطلوبان للمقارنات — تعرّف عليهما أو اكتبهما.',
+      'err.startingFirst': 'أدخل سعر البداية أولًا.',
+      'id.unidentified': 'غير مُعرَّفة',
+      'id.lowConfConsign': 'ثقة منخفضة — أكّد الماركة والموديل قبل المتابعة. ',
+      'id.lowConfListing': 'ثقة منخفضة — أكّد قبل المتابعة. ',
+      'comps.none': 'لم تُعثر على مقارنات عبر الواجهة — استخدم أزرار البحث اليدوي أعلاه.',
+      'comps.avgPrefix': 'متوسط المقارنات: ', 'comps.appliedBelow': ' — طُبّق كمقارنة إعادة بيع أدناه.',
+      'comps.oneOnly': ' (مقارنة واحدة فقط — تعامل بحذر).',
+      'comps.ebayErrPrefix': 'خطأ eBay: ',
+      'comps.ebayNA': 'واجهة eBay غير مُهيّأة — عرض سجلّ الأسعار الداخلي + الروابط اليدوية فقط.',
+      'lcomp.avgPrefix': 'متوسط ', 'lcomp.avgMid': ' مقارنات: ', 'lcomp.avgSuffix': ' (مُدخَل أعلاه).',
+      'lcomp.none': 'لم تُعثر على مقارنات — اكتب قيمة يدويًا أو اترك الحقل فارغًا.',
+      'badge.accept': 'قبول — مربح', 'badge.decline': 'رفض — أقل من الحد الأدنى 100 KWD',
+      'badge.above': 'أعلى من الحد الأدنى 100 KWD', 'badge.below': 'أقل من الحد الأدنى 100 KWD',
+      'md.after': 'بعد {n} شهرًا',
+      'label.priceOriginal': 'سعر البيع الأصلي بالتجزئة (KWD)',
+      'label.priceComp': 'سعر مقارنة إعادة البيع (KWD) — سعر حقيبة مستعملة مماثلة وُجدت على الإنترنت',
+      'reason.aiPrefix': 'ذكاء اصطناعي: ',
+      'finalhint': 'النطاق المسموح: {lo} – {hi} KWD. القيم خارجه تُثبَّت على النطاق.',
+      'profitpct.suffix': '٪ عائد على سعر البداية',
+      'factor.title': 'كيف شكّلت الخصائص السعر',
+      'factor.noEffect': 'لا أثر', 'factor.diminishing': 'تناقص العوائد (سقف التراكم)',
+      'factor.th.attribute': 'الخاصية', 'factor.th.value': 'القيمة', 'factor.th.effect': 'الأثر', 'factor.th.amount': 'المقدار', 'factor.th.running': 'التراكمي',
+      'factor.startingPrice': 'سعر البداية', 'factor.bandMid': 'منتصف النطاق (×{m})', 'factor.itemValueUsed': '← قيمة القطعة المستخدمة',
+      'toast.saved': 'تم الحفظ في سجلّ الأسعار', 'toast.saveFailedPrefix': 'فشل الحفظ: ',
+      'toast.calcFirst': 'احسب السعر أولًا', 'toast.runFirst': 'شغّل «اقترح» أو «احسب» أولًا',
+      'toast.entryDeleted': 'تم حذف السجلّ', 'toast.delFailedPrefix': 'تعذّر الحذف: ',
+      'toast.dlFailedPrefix': 'فشل التنزيل: ',
+      'confirm.delTitle': 'حذف السجلّ؟', 'confirm.delText': 'سيؤدي هذا إلى إزالته من سجلّ الأسعار نهائيًا.',
+      'confirm.del': 'حذف', 'confirm.keep': 'إبقاء',
+      'rm.generateQuote': 'إنشاء عرض سعر', 'rm.delete': 'حذف',
+      'log.empty': 'لم تُسعّر أي حقيبة بعد.',
+      'log.th.date': 'التاريخ', 'log.th.bag': 'الحقيبة', 'log.th.condition': 'الحالة', 'log.th.retail': 'التجزئة',
+      'log.th.compAvg': 'متوسط المقارنة', 'log.th.listing': 'البيع', 'log.th.payoutProfit': 'المستحقات / الربح',
+      'tag.quote': 'عرض سعر', 'tag.profit': 'ربح', 'tag.payout': 'مستحقات',
+      'qm.title': 'إنشاء عرض سعر للبائع', 'qm.bag': 'الحقيبة', 'qm.payoutPrefix': 'المستحقات ', 'qm.commissionMid': ' · العمولة ',
+      'qm.existing': 'بائع حالي', 'qm.new': 'جهة اتصال جديدة',
+      'qm.searchPh': 'ابحث عن بائع بالاسم أو الهاتف أو البريد', 'qm.namePh': 'الاسم', 'qm.emailPh': 'البريد الإلكتروني (اختياري)', 'qm.phonePh': 'الهاتف (اختياري)',
+      'qm.generate': 'إنشاء عرض السعر', 'qm.generating': 'جارٍ إنشاء عرض السعر…',
+      'qm.noSellers': 'لم يُعثر على بائعين.', 'qm.searchFailed': 'فشل البحث.', 'qm.selectedPrefix': 'المحدَّد: ', 'qm.seller': 'بائع',
+      'qm.enterBag': 'أدخل اسم الحقيبة', 'qm.selectSeller': 'ابحث واختر بائعًا', 'qm.enterContact': 'أدخل بيانات الاتصال',
+      'qm.createdPrefix': 'عرض السعر ', 'qm.createdMid': ' تم إنشاؤه — ', 'qm.openZoho': 'افتح في Zoho', 'qm.downloadPdf': 'تنزيل PDF',
+      'qm.linkedSeller': ' · مرتبط بالبائع', 'qm.quoteCreated': 'تم إنشاء عرض السعر', 'qm.quoteFailedPrefix': 'فشل إنشاء عرض السعر: ',
+      'qm.noPriceToQuote': 'لا سعر لعرضه — احسب أولًا'
+    }
+  };
+
+  // Backend attribute keys → Arabic (factor table). English falls back to Capitalised.
+  var ATTR_AR = { rare: 'نادرة', vintage: 'كلاسيكية', trendy: 'رائجة', seasonal: 'موسمية', material: 'الخامة', condition: 'الحالة', brand: 'الماركة', model: 'الموديل' };
+  var CONF_AR = { high: 'عالية', medium: 'متوسطة', low: 'منخفضة' };
+
+  // Lookup for JS-built strings in the active language (English fallback).
+  function T(key) {
+    var d = STR[LANG] || STR.en;
+    var v = (d && d[key] != null) ? d[key] : STR.en[key];
+    return v == null ? key : v;
+  }
+
+  // "high confidence" / "ثقة عالية" — confidence level comes from the backend.
+  function confidenceLabel(level) {
+    if (LANG === 'ar') return 'ثقة ' + (CONF_AR[level] || level || '');
+    return (level || '') + ' confidence';
+  }
+
+  // Factor-table attribute name: Arabic from ATTR_AR, else Capitalised English.
+  function attrLabel(attr) {
+    if (LANG === 'ar' && ATTR_AR[attr] != null) return ATTR_AR[attr];
+    return String(attr).charAt(0).toUpperCase() + String(attr).slice(1);
+  }
+
+  function applyLang(lang) {
+    LANG = (lang === 'ar') ? 'ar' : 'en';
+    try { localStorage.setItem('PRICING_LANG', LANG); } catch (e) {}
+    var html = document.documentElement;
+    html.lang = LANG; html.dir = (LANG === 'ar') ? 'rtl' : 'ltr';
+    // Static text nodes (cache the English innerHTML once so EN restore is lossless).
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      if (!el.hasAttribute('data-i18n-orig')) el.setAttribute('data-i18n-orig', el.innerHTML);
+      var k = el.getAttribute('data-i18n');
+      if (LANG === 'ar' && AR[k] != null) el.textContent = AR[k];
+      else el.innerHTML = el.getAttribute('data-i18n-orig');
+    });
+    // Placeholders.
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+      if (!el.hasAttribute('data-ph-orig')) el.setAttribute('data-ph-orig', el.getAttribute('placeholder') || '');
+      var k = el.getAttribute('data-i18n-ph');
+      el.setAttribute('placeholder', (LANG === 'ar' && AR[k] != null) ? AR[k] : el.getAttribute('data-ph-orig'));
+    });
+    var tg = $('lang-toggle'); if (tg) tg.textContent = (LANG === 'ar') ? 'EN' : 'عربي';
+    // Refresh JS-rendered regions so their strings pick up the language.
+    if (typeof updateBasisUI === 'function') updateBasisUI();
+    if (typeof lastPrice !== 'undefined' && lastPrice && typeof render === 'function') render(lastPrice);
+    if (typeof lastListing !== 'undefined' && lastListing && typeof renderListing === 'function') renderListing(lastListing);
+    if (typeof loadLog === 'function') loadLog();
+  }
 
   // ── Backend wiring ─────────────────────────────────────────────────────────
   // The Pricing 3.0 logic now lives in the erlume backend. This tool is just a
@@ -1142,13 +1412,13 @@
   $('btn-identify').addEventListener('click', function () {
     showError($('form-error'), '');
     var files = Array.prototype.slice.call($('photos').files, 0, 3);
-    if (!files.length) { showError($('form-error'), 'Upload at least one photo first.'); return; }
+    if (!files.length) { showError($('form-error'), T('err.uploadPhoto')); return; }
     var fd = new FormData();
     files.forEach(function (f) { fd.append('photos', f); });
     fd.append('brand', $('brand').value);
     fd.append('model', $('model').value);
     var btn = $('btn-identify');
-    btn.disabled = true; btn.textContent = 'Identifying…';
+    btn.disabled = true; btn.textContent = T('busy.identifying');
     fetch('/api/identify', { method: 'POST', body: fd })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); return d; }); })
       .then(function (r) {
@@ -1158,16 +1428,16 @@
         if (r.brandTier) $('tier').value = r.brandTier;
         syncQuery();
         $('id-box').classList.add('show');
-        $('id-name').textContent = [r.brand, r.model, r.size].filter(Boolean).join(' ') || 'Unidentified';
-        $('id-conf').textContent = r.confidence + ' confidence';
+        $('id-name').textContent = [r.brand, r.model, r.size].filter(Boolean).join(' ') || T('id.unidentified');
+        $('id-conf').textContent = confidenceLabel(r.confidence);
         $('id-conf').className = 'conf ' + r.confidence;
         $('id-meta').textContent = [r.material, r.color].filter(Boolean).join(' · ');
-        $('id-notes').textContent = (r.confidence === 'low' ? 'Low confidence — confirm brand & model before continuing. ' : '') + (r.notes || '');
+        $('id-notes').textContent = (r.confidence === 'low' ? T('id.lowConfConsign') : '') + (r.notes || '');
         toggleUltra();
         calculate();
       })
       .catch(function (e) { showError($('form-error'), e.message); })
-      .then(function () { btn.disabled = false; btn.textContent = 'Identify from photos'; });
+      .then(function () { btn.disabled = false; btn.textContent = T('btn.identify'); });
   });
 
   // ---- Step B: comps --------------------------------------------------------
@@ -1176,9 +1446,9 @@
     showError($('comps-error'), '');
     var brand = $('brand').value.trim();
     var model = $('model').value.trim();
-    if (!brand || !model) { showError($('form-error'), 'Brand and model are required — identify from photos or type them.'); return; }
+    if (!brand || !model) { showError($('form-error'), T('err.brandModelReq')); return; }
     var btn = $('btn-comps');
-    btn.disabled = true; btn.textContent = 'Searching…';
+    btn.disabled = true; btn.textContent = T('busy.searching');
     fetch('/api/comps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1207,12 +1477,12 @@
           list.appendChild(div);
         });
         if (!r.comps.length) {
-          list.innerHTML = '<div class="hint muted" style="margin-top:8px">No API comps found — use the manual search buttons above.</div>';
+          list.innerHTML = '<div class="hint muted" style="margin-top:8px">' + T('comps.none') + '</div>';
         }
         if (r.avgKwd != null) {
           $('comps-median').style.display = '';
-          $('comps-median').textContent = 'Average of comps: ' + fmt(r.avgKwd) + ' KWD' +
-            (r.enoughComps ? ' — applied as resale comp below.' : ' (only 1 comp — treat with caution).');
+          $('comps-median').textContent = T('comps.avgPrefix') + fmt(r.avgKwd) + ' KWD' +
+            (r.enoughComps ? T('comps.appliedBelow') : T('comps.oneOnly'));
           if (r.enoughComps) {
             if (getBasis() === 'original') originalPriceMemo = parseFloat($('price').value) || null;
             document.querySelector('input[name="basis"][value="comp"]').checked = true;
@@ -1222,12 +1492,12 @@
         } else {
           $('comps-median').style.display = 'none';
         }
-        showError($('comps-error'), r.ebayError ? 'eBay error: ' + r.ebayError
-          : (!r.ebayAvailable ? 'eBay API not configured — showing internal price log + manual links only.' : ''));
+        showError($('comps-error'), r.ebayError ? T('comps.ebayErrPrefix') + r.ebayError
+          : (!r.ebayAvailable ? T('comps.ebayNA') : ''));
         calculate();
       })
       .catch(function (e) { showError($('form-error'), e.message); })
-      .then(function () { btn.disabled = false; btn.textContent = 'AI comps'; });
+      .then(function () { btn.disabled = false; btn.textContent = T('btn.aicomps'); });
   });
 
   // ---- pricing basis --------------------------------------------------------
@@ -1244,13 +1514,13 @@
     if (basis === 'original') {
       optOriginal.classList.add('active');
       optComp.classList.remove('active');
-      $('price-label').textContent = 'Original retail price (KWD)';
+      $('price-label').textContent = T('label.priceOriginal');
       $('year-field').style.display = '';
       $('comp-note').classList.remove('show');
     } else {
       optComp.classList.add('active');
       optOriginal.classList.remove('active');
-      $('price-label').textContent = 'Resale comp price (KWD) — price of a comparable used bag found online';
+      $('price-label').textContent = T('label.priceComp');
       $('year-field').style.display = 'none';
       $('comp-note').classList.add('show');
     }
@@ -1320,10 +1590,10 @@
     var badge = $('accept-badge');
     if (r.accept) {
       badge.className = 'badge accept';
-      badge.textContent = 'Accept — profitable';
+      badge.textContent = T('badge.accept');
     } else {
       badge.className = 'badge decline';
-      badge.textContent = 'Decline — below the 100 KWD minimum';
+      badge.textContent = T('badge.decline');
     }
 
     var warn = $('server-warning');
@@ -1339,7 +1609,7 @@
     (r.markdowns || []).forEach(function (m) {
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td>After ' + m.months + ' months</td>' +
+        '<td>' + T('md.after').replace('{n}', m.months) + '</td>' +
         '<td>-' + Math.round(m.discount * 100) + '%</td>' +
         '<td>' + m.listingPrice.toFixed(3) + '</td>' +
         '<td>' + fmt(m.erlumeCut) + '</td>' +
@@ -1396,8 +1666,8 @@
       })
     })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); return d; }); })
-      .then(function () { showToast('Saved to price log', 'success'); loadLog(); })
-      .catch(function (e) { showToast('Save failed: ' + e.message, 'error'); });
+      .then(function () { showToast(T('toast.saved'), 'success'); loadLog(); })
+      .catch(function (e) { showToast(T('toast.saveFailedPrefix') + e.message, 'error'); });
   });
 
   // ---- seller quote modal (usable from the price result OR any price-log row) ----
@@ -1411,12 +1681,12 @@
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
       })
-      .catch(function (e) { showToast('Download failed: ' + e.message, 'error'); });
+      .catch(function (e) { showToast(T('toast.dlFailedPrefix') + e.message, 'error'); });
   }
 
   // data: { bagName, brand, model, listingPrice, erlumeCut, sellerPayout }
   function openQuoteModal(data) {
-    if (!data || data.listingPrice == null || data.sellerPayout == null) { showToast('No price to quote — calculate first', 'error'); return; }
+    if (!data || data.listingPrice == null || data.sellerPayout == null) { showToast(T('qm.noPriceToQuote'), 'error'); return; }
     var old = document.getElementById('quote-modal'); if (old) old.remove();
 
     var mode = 'existing';
@@ -1429,30 +1699,31 @@
     var ov = document.createElement('div');
     ov.id = 'quote-modal';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;';
+    var RTL = (LANG === 'ar');
     ov.innerHTML =
-      '<div style="background:#fff;border-radius:14px;width:420px;max-width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.25);">' +
+      '<div dir="' + (RTL ? 'rtl' : 'ltr') + '" style="background:#fff;border-radius:14px;width:420px;max-width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.25);text-align:' + (RTL ? 'right' : 'left') + ';">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-          '<h3 style="margin:0;font-size:17px;">Generate seller quote</h3>' +
+          '<h3 style="margin:0;font-size:17px;">' + T('qm.title') + '</h3>' +
           '<button type="button" id="qm-close" style="border:none;background:none;font-size:24px;cursor:pointer;color:#999;line-height:1;">&times;</button>' +
         '</div>' +
-        '<div style="font-size:12px;color:#666;margin-bottom:4px;">Bag</div>' +
+        '<div style="font-size:12px;color:#666;margin-bottom:4px;">' + T('qm.bag') + '</div>' +
         '<input type="text" id="qm-item" style="' + INP + 'margin-bottom:6px;">' +
-        '<div style="font-size:12px;color:#888;margin-bottom:14px;">Payout <strong>' + fmt(data.sellerPayout) + ' KWD</strong> · commission ' + fmt(data.erlumeCut) + ' KWD</div>' +
+        '<div style="font-size:12px;color:#888;margin-bottom:14px;">' + T('qm.payoutPrefix') + '<strong>' + fmt(data.sellerPayout) + ' KWD</strong>' + T('qm.commissionMid') + fmt(data.erlumeCut) + ' KWD</div>' +
         '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
-          '<button type="button" id="qm-existing" style="' + ON + '">Existing seller</button>' +
-          '<button type="button" id="qm-new" style="' + OFF + '">New contact</button>' +
+          '<button type="button" id="qm-existing" style="' + ON + '">' + T('qm.existing') + '</button>' +
+          '<button type="button" id="qm-new" style="' + OFF + '">' + T('qm.new') + '</button>' +
         '</div>' +
         '<div id="qm-ex">' +
-          '<input type="text" id="qm-search" placeholder="Search seller by name, phone, or email" style="' + INP + '">' +
+          '<input type="text" id="qm-search" placeholder="' + T('qm.searchPh') + '" style="' + INP + '">' +
           '<div id="qm-results" style="margin-top:6px;"></div>' +
           '<div id="qm-selected" style="margin-top:6px;font-size:12px;color:#2a7d4f;"></div>' +
         '</div>' +
         '<div id="qm-nw" style="display:none;">' +
-          '<input type="text" id="qm-name" placeholder="Name" style="' + INP + 'margin-bottom:8px;">' +
-          '<input type="text" id="qm-email" placeholder="Email (optional)" style="' + INP + 'margin-bottom:8px;">' +
-          '<input type="text" id="qm-phone" placeholder="Phone (optional)" style="' + INP + '">' +
+          '<input type="text" id="qm-name" placeholder="' + T('qm.namePh') + '" style="' + INP + 'margin-bottom:8px;">' +
+          '<input type="text" id="qm-email" placeholder="' + T('qm.emailPh') + '" style="' + INP + 'margin-bottom:8px;">' +
+          '<input type="text" id="qm-phone" placeholder="' + T('qm.phonePh') + '" style="' + INP + '">' +
         '</div>' +
-        '<button type="button" id="qm-generate" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;background:#111;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;">Generate quote</button>' +
+        '<button type="button" id="qm-generate" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;background:#111;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;">' + T('qm.generate') + '</button>' +
         '<div id="qm-msg" style="margin-top:10px;font-size:13px;"></div>' +
       '</div>';
     document.body.appendChild(ov);
@@ -1491,9 +1762,9 @@
               seen[key] = true;
               list.push(s);
             });
-            if (!list.length) { g('qm-results').innerHTML = '<div style="font-size:12px;color:#999;padding:4px 0;">No sellers found.</div>'; return; }
+            if (!list.length) { g('qm-results').innerHTML = '<div style="font-size:12px;color:#999;padding:4px 0;">' + T('qm.noSellers') + '</div>'; return; }
             g('qm-results').innerHTML = list.map(function (s, i) {
-              var label = [s.fullName, s.phoneNumber, s.emailAddress].filter(Boolean).join(' · ') || 'Seller';
+              var label = [s.fullName, s.phoneNumber, s.emailAddress].filter(Boolean).join(' · ') || T('qm.seller');
               return '<div data-i="' + i + '" class="qm-row" style="padding:8px;border:1px solid #eee;border-radius:6px;margin-bottom:4px;cursor:pointer;">' + label + '</div>';
             }).join('');
             g('qm-results').querySelectorAll('.qm-row').forEach(function (row) {
@@ -1501,41 +1772,41 @@
                 selectedSeller = list[Number(row.getAttribute('data-i'))];
                 g('qm-results').innerHTML = '';
                 g('qm-search').value = selectedSeller.fullName || selectedSeller.phoneNumber || '';
-                g('qm-selected').textContent = 'Selected: ' + [selectedSeller.fullName, selectedSeller.phoneNumber].filter(Boolean).join(' · ');
+                g('qm-selected').textContent = T('qm.selectedPrefix') + [selectedSeller.fullName, selectedSeller.phoneNumber].filter(Boolean).join(' · ');
               });
             });
           })
-          .catch(function () { g('qm-results').innerHTML = '<div style="font-size:12px;color:#c0392b;">Search failed.</div>'; });
+          .catch(function () { g('qm-results').innerHTML = '<div style="font-size:12px;color:#c0392b;">' + T('qm.searchFailed') + '</div>'; });
       }, 300);
     });
 
     g('qm-generate').addEventListener('click', function () {
       var msg = g('qm-msg'); msg.innerHTML = '';
       var itemName = g('qm-item').value.trim();
-      if (!itemName) { showToast('Enter the bag name', 'error'); g('qm-item').focus(); return; }
+      if (!itemName) { showToast(T('qm.enterBag'), 'error'); g('qm-item').focus(); return; }
       var body = { bagName: itemName, brand: data.brand || '', model: data.model || '', listingPrice: data.listingPrice, erlumeCut: data.erlumeCut, sellerPayout: data.sellerPayout, skipLog: !!data.skipLog };
       if (mode === 'existing') {
-        if (!selectedSeller) { showToast('Search and select a seller', 'error'); g('qm-search').focus(); return; }
+        if (!selectedSeller) { showToast(T('qm.selectSeller'), 'error'); g('qm-search').focus(); return; }
         body.sellerId = selectedSeller._id;
       } else {
         var nm = g('qm-name').value.trim();
-        if (!nm && !g('qm-email').value.trim() && !g('qm-phone').value.trim()) { showToast('Enter contact details', 'error'); return; }
+        if (!nm && !g('qm-email').value.trim() && !g('qm-phone').value.trim()) { showToast(T('qm.enterContact'), 'error'); return; }
         body.contact = { name: nm, email: g('qm-email').value.trim(), phone: g('qm-phone').value.trim() };
       }
-      var gb = g('qm-generate'); gb.disabled = true; gb.textContent = 'Creating quote…';
+      var gb = g('qm-generate'); gb.disabled = true; gb.textContent = T('qm.generating');
       post('/api/quote', body)
         .then(function (r) {
           var num = r.estimateNumber || '';
-          msg.innerHTML = 'Quote <strong>' + num + '</strong> created — '
-            + '<a href="' + r.estimateUrl + '" target="_blank" style="color:#c0654f;text-decoration:underline;">open in Zoho</a>'
-            + ' · <a href="#" id="qm-dl" style="color:#c0654f;text-decoration:underline;">download PDF</a>'
-            + (r.linkedSellerId ? ' · linked to seller' : '');
+          msg.innerHTML = T('qm.createdPrefix') + '<strong>' + num + '</strong>' + T('qm.createdMid')
+            + '<a href="' + r.estimateUrl + '" target="_blank" style="color:#c0654f;text-decoration:underline;">' + T('qm.openZoho') + '</a>'
+            + ' · <a href="#" id="qm-dl" style="color:#c0654f;text-decoration:underline;">' + T('qm.downloadPdf') + '</a>'
+            + (r.linkedSellerId ? T('qm.linkedSeller') : '');
           var dl = g('qm-dl'); if (dl) dl.addEventListener('click', function (e) { e.preventDefault(); downloadQuotePdf(r.estimateId, num); });
-          showToast('Quote created', 'success');
+          showToast(T('qm.quoteCreated'), 'success');
           loadLog();
         })
-        .catch(function (e) { showToast('Quote failed: ' + e.message, 'error'); })
-        .then(function () { gb.disabled = false; gb.textContent = 'Generate quote'; });
+        .catch(function (e) { showToast(T('qm.quoteFailedPrefix') + e.message, 'error'); })
+        .then(function () { gb.disabled = false; gb.textContent = T('qm.generate'); });
     });
 
     g('qm-close').addEventListener('click', function () { ov.remove(); });
@@ -1544,7 +1815,7 @@
   }
 
   $('btn-open-quote').addEventListener('click', function () {
-    if (!lastPrice) { showToast('Calculate a price first', 'error'); return; }
+    if (!lastPrice) { showToast(T('toast.calcFirst'), 'error'); return; }
     openQuoteModal({
       bagName: [$('brand').value, $('model').value].filter(Boolean).join(' '),
       brand: $('brand').value, model: $('model').value,
@@ -1558,7 +1829,7 @@
       .then(function (r) { return r.json(); })
       .then(function (entries) {
         var box = $('log-table');
-        if (!entries.length) { box.innerHTML = '<span class="log-empty">No bags priced yet.</span>'; return; }
+        if (!entries.length) { box.innerHTML = '<span class="log-empty">' + T('log.empty') + '</span>'; return; }
         var rows = entries.map(function (e, i) {
           return '<tr>' +
             '<td>' + e.createdAt.slice(0, 10) + '</td>' +
@@ -1573,16 +1844,16 @@
               // and the real costs we covered (same math as the live
               // calculator). Older rows saved before this field existed
               // treat missing delivery/cleaning as 0.
-              ? fmt(e.listingPrice - (e.originalPrice || 0) - (e.deliveryFee || 0) - (e.cleaningCost || 0)) + ' <span class="basis-tag">profit</span>'
-              : fmt(e.sellerPayout) + ' <span class="basis-tag">payout</span>') + '</td>' +
+              ? fmt(e.listingPrice - (e.originalPrice || 0) - (e.deliveryFee || 0) - (e.cleaningCost || 0)) + ' <span class="basis-tag">' + T('tag.profit') + '</span>'
+              : fmt(e.sellerPayout) + ' <span class="basis-tag">' + T('tag.payout') + '</span>') + '</td>' +
             '<td>' + (e.source === 'quote'
-              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;">Quote</span>'
+              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;">' + T('tag.quote') + '</span>'
               : (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>')) + '</td>' +
             '<td style="white-space:nowrap;text-align:right;"><button type="button" class="menu-btn" data-i="' + i + '" title="Actions" aria-label="Actions">⋮</button></td>' +
             '</tr>';
         }).join('');
         box.innerHTML = '<table class="log-table"><thead><tr>' +
-          '<th>Date</th><th>Bag</th><th>Condition</th><th class="num">Retail</th><th class="num">Comp avg.</th><th class="num">Listing</th><th class="num">Payout / Profit</th><th></th><th></th>' +
+          '<th>' + T('log.th.date') + '</th><th>' + T('log.th.bag') + '</th><th>' + T('log.th.condition') + '</th><th class="num">' + T('log.th.retail') + '</th><th class="num">' + T('log.th.compAvg') + '</th><th class="num">' + T('log.th.listing') + '</th><th class="num">' + T('log.th.payoutProfit') + '</th><th></th><th></th>' +
           '</tr></thead><tbody>' + rows + '</tbody></table>';
         box.querySelectorAll('.menu-btn').forEach(function (b) {
           b.addEventListener('click', function (ev) {
@@ -1612,14 +1883,14 @@
   }
   function confirmDeleteEntry(entry) {
     showConfirm({
-      title: 'Delete entry?',
-      text: 'This removes it from the price log permanently.',
-      confirmText: 'Delete', cancelText: 'Keep', danger: true,
+      title: T('confirm.delTitle'),
+      text: T('confirm.delText'),
+      confirmText: T('confirm.del'), cancelText: T('confirm.keep'), danger: true,
       onConfirm: function () {
         fetch('/api/log/' + entry.id, { method: 'DELETE' })
           .then(function (r) { if (!r.ok) throw new Error('delete failed'); return r.json(); })
-          .then(function () { loadLog(); showToast('Entry deleted', 'success'); })
-          .catch(function (e) { showToast('Could not delete: ' + e.message, 'error'); });
+          .then(function () { loadLog(); showToast(T('toast.entryDeleted'), 'success'); })
+          .catch(function (e) { showToast(T('toast.delFailedPrefix') + e.message, 'error'); });
       }
     });
   }
@@ -1631,9 +1902,10 @@
     menu.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1px solid #e5e5e5;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.12);overflow:hidden;min-width:160px;font-size:13px;';
     menu.style.top = (rect.bottom + 4) + 'px';
     menu.style.left = Math.max(8, rect.right - 160) + 'px';
+    var ta = (LANG === 'ar') ? 'right' : 'left';
     menu.innerHTML =
-      '<button type="button" id="rm-quote" class="rm-item" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:#fff;font:inherit;cursor:pointer;">Generate quote</button>' +
-      '<button type="button" id="rm-delete" class="rm-item" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;border-top:1px solid #f0f0f0;background:#fff;color:#c0392b;font:inherit;cursor:pointer;">Delete</button>';
+      '<button type="button" id="rm-quote" class="rm-item" style="display:block;width:100%;text-align:' + ta + ';padding:10px 14px;border:none;background:#fff;font:inherit;cursor:pointer;">' + T('rm.generateQuote') + '</button>' +
+      '<button type="button" id="rm-delete" class="rm-item" style="display:block;width:100%;text-align:' + ta + ';padding:10px 14px;border:none;border-top:1px solid #f0f0f0;background:#fff;color:#c0392b;font:inherit;cursor:pointer;">' + T('rm.delete') + '</button>';
     document.body.appendChild(menu);
     document.getElementById('rm-quote').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); quoteFromLog(entry); });
     document.getElementById('rm-delete').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); confirmDeleteEntry(entry); });
@@ -1695,32 +1967,32 @@
   $('l-identify').addEventListener('click', function () {
     showError($('l-error'), '');
     var files = Array.prototype.slice.call($('l-photos').files, 0, 3);
-    if (!files.length) { showError($('l-error'), 'Upload at least one photo first.'); return; }
+    if (!files.length) { showError($('l-error'), T('err.uploadPhoto')); return; }
     var fd = new FormData();
     files.forEach(function (f) { fd.append('photos', f); });
     fd.append('brand', $('l-brand').value); fd.append('model', $('l-model').value);
-    var btn = $('l-identify'); btn.disabled = true; btn.textContent = 'Identifying…';
+    var btn = $('l-identify'); btn.disabled = true; btn.textContent = T('busy.identifying');
     post('/api/identify', fd, true).then(function (r) {
       lastIdentify = r;
       if (r.brand) $('l-brand').value = r.brand;
       if (r.model) $('l-model').value = r.model;
       if (r.brandTier) $('l-brandtier').value = r.brandTier;
       $('l-idbox').classList.add('show');
-      $('l-idname').textContent = [r.brand, r.model, r.size].filter(Boolean).join(' ') || 'Unidentified';
-      $('l-idconf').textContent = r.confidence + ' confidence';
+      $('l-idname').textContent = [r.brand, r.model, r.size].filter(Boolean).join(' ') || T('id.unidentified');
+      $('l-idconf').textContent = confidenceLabel(r.confidence);
       $('l-idconf').className = 'conf ' + r.confidence;
       $('l-idmeta').textContent = [r.material, r.color].filter(Boolean).join(' · ');
-      $('l-idnotes').textContent = (r.confidence === 'low' ? 'Low confidence — confirm before continuing. ' : '') + (r.notes || '');
+      $('l-idnotes').textContent = (r.confidence === 'low' ? T('id.lowConfListing') : '') + (r.notes || '');
     }).catch(function (e) { showError($('l-error'), e.message); })
-      .then(function () { btn.disabled = false; btn.textContent = 'Identify from photos'; });
+      .then(function () { btn.disabled = false; btn.textContent = T('btn.identify'); });
   });
 
   // ---- listing tab: AI comps → average -----------------------------------------------
   $('l-comps').addEventListener('click', function () {
     showError($('l-error'), '');
     var brand = $('l-brand').value.trim(), model = $('l-model').value.trim();
-    if (!brand || !model) { showError($('l-error'), 'Brand and model are required for comps — identify or type them.'); return; }
-    var btn = $('l-comps'); btn.disabled = true; btn.textContent = 'Searching…';
+    if (!brand || !model) { showError($('l-error'), T('err.brandModelComps')); return; }
+    var btn = $('l-comps'); btn.disabled = true; btn.textContent = T('busy.searching');
     post('/api/comps', {
       brand: brand, model: model,
       size: lastIdentify && lastIdentify.size, material: lastIdentify && lastIdentify.material,
@@ -1738,12 +2010,12 @@
       });
       if (r.avgKwd != null) {
         $('l-compavg').value = r.avgKwd;
-        $('l-comphint').textContent = 'Average of ' + r.comps.length + ' comps: ' + fmt(r.avgKwd) + ' KWD (filled in above).';
+        $('l-comphint').textContent = T('lcomp.avgPrefix') + r.comps.length + T('lcomp.avgMid') + fmt(r.avgKwd) + ' KWD' + T('lcomp.avgSuffix');
       } else {
-        $('l-comphint').textContent = 'No comps found — type a value manually or leave blank.';
+        $('l-comphint').textContent = T('lcomp.none');
       }
     }).catch(function (e) { showError($('l-error'), e.message); })
-      .then(function () { btn.disabled = false; btn.textContent = 'AI comps → average'; });
+      .then(function () { btn.disabled = false; btn.textContent = T('btn.lcomps'); });
   });
 
   // ---- listing (items we buy) — shared runner for AI / manual / live-edit -----------
@@ -1751,7 +2023,7 @@
   function runListing(extra, btn, busyText, doneText) {
     showError($('l-error'), '');
     var starting = parseFloat($('l-starting').value);
-    if (Number.isNaN(starting) || starting <= 0) { showError($('l-error'), 'Enter a starting price first.'); return; }
+    if (Number.isNaN(starting) || starting <= 0) { showError($('l-error'), T('err.startingFirst')); return; }
     if (btn) { btn.disabled = true; btn.textContent = busyText; }
     var body = {
       startingPrice: starting,
@@ -1792,19 +2064,19 @@
     $('l-profit-delivery').textContent = fmt(r.pickupFee) + ' KWD';
     $('l-profit-cleaning').textContent = fmt(r.cleaningCost) + ' KWD';
     $('l-profit-total').textContent = fmt(profit) + ' KWD';
-    $('l-profit-pct').textContent = (startingPaid > 0 ? (profit / startingPaid * 100).toFixed(1) : '—') + '% return on starting price';
+    $('l-profit-pct').textContent = (startingPaid > 0 ? (profit / startingPaid * 100).toFixed(1) : '—') + T('profitpct.suffix');
     var badge = $('l-badge'); badge.style.display = 'inline-block';
     badge.className = 'badge ' + (r.accept ? 'accept' : 'decline');
-    badge.textContent = r.accept ? 'Above 100 KWD minimum' : 'Below 100 KWD minimum';
+    badge.textContent = r.accept ? T('badge.above') : T('badge.below');
     $('l-reason').style.display = 'block';
-    $('l-reason').textContent = (r.method === 'ai' ? 'AI: ' : '') + r.aiReason;
+    $('l-reason').textContent = (r.method === 'ai' ? T('reason.aiPrefix') : '') + r.aiReason;
     // Editable final value (don't clobber while the user is typing in it).
     $('l-finalwrap').style.display = 'block';
     if (document.activeElement !== $('l-finalvalue')) $('l-finalvalue').value = r.suggestedMarketValue;
-    $('l-finalhint').textContent = 'Allowed band: ' + fmt(r.range.low) + ' – ' + fmt(r.range.high) + ' KWD. Values outside snap to the band.';
+    $('l-finalhint').textContent = T('finalhint').replace('{lo}', fmt(r.range.low)).replace('{hi}', fmt(r.range.high));
     // How each attribute (rare, seasonal, vintage…) moved the price.
     var startVal = parseFloat($('l-starting').value) || 0;
-    var cap = function (s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); };
+    var cap = attrLabel;
     // Each row shows the attribute's raw, un-dampened multiplier from config
     // (what the choice nominally means) — so this running total is the OLD
     // straight-multiplication number, not necessarily the final one. When
@@ -1819,7 +2091,7 @@
       var label, amt, cls;
       if (pct > 0) { label = '+' + pct + '%'; amt = '+' + fmt(delta) + ' KWD'; cls = 'up'; }
       else if (pct < 0) { label = pct + '%'; amt = fmt(delta) + ' KWD'; cls = 'down'; }
-      else { label = 'no effect'; amt = '—'; cls = 'flat'; }
+      else { label = T('factor.noEffect'); amt = '—'; cls = 'flat'; }
       return '<tr><td>' + cap(f.attr) + '</td><td>' + f.choice + '</td>' +
         '<td class="effect ' + cls + '">' + label + '</td>' +
         '<td class="effect ' + cls + '">' + amt + '</td>' +
@@ -1832,27 +2104,27 @@
       var adjCls = stackAdj > 0 ? 'up' : 'down';
       var adjLabel = (adjPct > 0 ? '+' : '') + adjPct + '%';
       var adjAmt = (stackAdj > 0 ? '+' : '') + fmt(stackAdj) + ' KWD';
-      stackRow = '<tr><td>Diminishing returns (stacking cap)</td><td></td>' +
+      stackRow = '<tr><td>' + T('factor.diminishing') + '</td><td></td>' +
         '<td class="effect ' + adjCls + '">' + adjLabel + '</td>' +
         '<td class="effect ' + adjCls + '">' + adjAmt + '</td>' +
         '<td class="effect">' + fmt(r.range.mid) + '</td></tr>';
     }
     $('l-factors').innerHTML =
-      '<div class="factor-title">How the attributes shaped the price</div>' +
-      '<table class="factor-table"><thead><tr><th>Attribute</th><th>Value</th><th>Effect</th><th>Amount</th><th>Running</th></tr></thead><tbody>' +
-      '<tr class="startrow"><td>Starting price</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(startVal) + '</td></tr>' +
+      '<div class="factor-title">' + T('factor.title') + '</div>' +
+      '<table class="factor-table"><thead><tr><th>' + T('factor.th.attribute') + '</th><th>' + T('factor.th.value') + '</th><th>' + T('factor.th.effect') + '</th><th>' + T('factor.th.amount') + '</th><th>' + T('factor.th.running') + '</th></tr></thead><tbody>' +
+      '<tr class="startrow"><td>' + T('factor.startingPrice') + '</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(startVal) + '</td></tr>' +
       frows +
       stackRow +
-      '<tr class="combined"><td>Band midpoint (×' + r.range.multiplier + ')</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.range.mid) + '</td></tr>' +
-      '<tr class="midrow"><td>→ Item value used</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.suggestedMarketValue) + '</td></tr>' +
+      '<tr class="combined"><td>' + T('factor.bandMid').replace('{m}', r.range.multiplier) + '</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.range.mid) + '</td></tr>' +
+      '<tr class="midrow"><td>' + T('factor.itemValueUsed') + '</td><td></td><td class="effect">—</td><td class="effect">—</td><td class="effect">' + fmt(r.suggestedMarketValue) + '</td></tr>' +
       '</tbody></table>';
   }
 
   $('l-suggest').addEventListener('click', function () {
-    runListing({}, $('l-suggest'), 'Thinking…', 'Suggest price (AI)');
+    runListing({}, $('l-suggest'), T('busy.thinking'), T('btn.lsuggest'));
   });
   $('l-calc').addEventListener('click', function () {
-    runListing({ mode: 'manual' }, $('l-calc'), 'Calculating…', 'Calculate (formula only)');
+    runListing({ mode: 'manual' }, $('l-calc'), T('busy.calculating'), T('btn.lcalc'));
   });
   // Live re-price when staff nudge the final value (debounced, no AI).
   var finalTimer = null;
@@ -1865,7 +2137,7 @@
 
   // ---- listing: save bought item to the price log -----------------------------------
   $('l-save').addEventListener('click', function () {
-    if (!lastListing) { showToast('Run “Suggest” or “Calculate” first', 'error'); return; }
+    if (!lastListing) { showToast(T('toast.runFirst'), 'error'); return; }
     post('/api/log', {
       source: 'listing',
       brand: $('l-brand').value, model: $('l-model').value,
@@ -1886,15 +2158,20 @@
       erlumeCut: lastListing.erlumeCut,
       sellerPayout: lastListing.sellerPayout,
       accepted: lastListing.accept
-    }).then(function () { showToast('Saved to price log', 'success'); loadLog(); })
-      .catch(function (e) { showToast('Save failed: ' + e.message, 'error'); });
+    }).then(function () { showToast(T('toast.saved'), 'success'); loadLog(); })
+      .catch(function (e) { showToast(T('toast.saveFailedPrefix') + e.message, 'error'); });
   });
+
+  // Language toggle (عربي / EN) — persists in localStorage, flips the whole UI + direction.
+  var langToggle = $('lang-toggle');
+  if (langToggle) langToggle.addEventListener('click', function () { applyLang(LANG === 'ar' ? 'en' : 'ar'); });
 
   updateBasisUI();
   toggleUltra();
   toggleFastFashionNote();
   calculate();
   loadLog();
+  applyLang(LANG);
 })();
 </script>
 </body>
