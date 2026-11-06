@@ -762,7 +762,7 @@
 
       <div class="listing-hero earn-hero">
         <div class="label" data-i18n="res.youEarn">You'll earn</div>
-        <div class="amount"><span id="hero-earn">0.000</span><small>KWD</small></div>
+        <div class="amount"><span id="hero-earn">0.000</span><small data-i18n="unit.kwd">KWD</small></div>
         <div id="accept-badge" class="badge accept">Accept — profitable</div>
       </div>
 
@@ -784,7 +784,7 @@
         <div><div class="k" data-i18n="payout.listing">Listing price · buyer pays</div></div>
         <div class="v" id="box-listing">0.000 KWD</div>
       </div>
-      <div class="commission-line"><span data-i18n="commission.prefix">erlume commission:</span> <span id="commission-amount">0.000</span> KWD (<span id="commission-pct">20</span><span data-i18n="commission.suffix">%, min</span> <span id="commission-floor">10</span> KWD)</div>
+      <div class="commission-line"><span data-i18n="commission.prefix">erlume commission:</span> <span id="commission-amount">0.000</span> <span data-i18n="unit.kwd">KWD</span> (<span id="commission-pct">20</span><span data-i18n="commission.suffix">%, min</span> <span id="commission-floor">10</span> <span data-i18n="unit.kwd">KWD</span>)</div>
 
       <h3 class="section-title" data-i18n="section.markdown">Markdown Schedule (if unsold)</h3>
       <table class="markdown-table">
@@ -906,13 +906,13 @@
         <h2 data-i18n="card.suggestedPrice">Suggested Price</h2>
         <div class="listing-hero">
           <div class="label" data-i18n="res.suggestedListing">Suggested listing price</div>
-          <div class="amount"><span id="l-listing">—</span><small>KWD</small></div>
+          <div class="amount"><span id="l-listing">—</span><small data-i18n="unit.kwd">KWD</small></div>
           <div id="l-badge" class="badge accept" style="display:none"></div>
         </div>
         <div class="band">
           <span class="lo"><span data-i18n="band.prefix">band</span> <span id="l-low">—</span></span>
           <span class="arrow">→</span>
-          <span class="hi"><span id="l-high">—</span> KWD</span>
+          <span class="hi"><span id="l-high">—</span> <span data-i18n="unit.kwd">KWD</span></span>
         </div>
         <div class="ai-reason" id="l-reason" style="display:none"></div>
         <div class="field" id="l-finalwrap" style="display:none">
@@ -996,6 +996,7 @@
   // Arabic for every static data-i18n / data-i18n-ph key. English is kept in the
   // markup itself (cached on first switch), so going back to English is lossless.
   var AR = {
+    'unit.kwd': 'د.ك',
     'nav.consignment': 'بيع بالعمولة', 'nav.listing': 'قوائم erlume',
     'header.title': 'تسعير الحقائب بالذكاء الاصطناعي',
     'header.subtitle': 'فخامة مُستعمَلة، مُسعّرة بدقة — أداة داخلية',
@@ -1026,8 +1027,8 @@
     'field.condition': 'الحالة',
     'cond.likeNew': 'كالجديدة', 'cond.gentlyUsed': 'مستعملة بعناية', 'cond.fairWorn': 'مقبولة أو مُستهلَكة',
     'field.pickup': 'الاستلام',
-    'pickup.dropoff': 'تسليم باليد (مجاني)', 'pickup.own': 'استلام — سائق خاص (+3 KWD)', 'pickup.third': 'استلام — طرف ثالث (+5 KWD)',
-    'field.cleaning': 'تكلفة التنظيف (KWD)',
+    'pickup.dropoff': 'تسليم باليد (مجاني)', 'pickup.own': 'استلام — سائق خاص (+3 د.ك)', 'pickup.third': 'استلام — طرف ثالث (+5 د.ك)',
+    'field.cleaning': 'تكلفة التنظيف (د.ك)',
     'toggle.payment': 'معلومات طريقة الدفع (لا تؤثر على الحساب)',
     'payment.detail': 'للاستخدام الداخلي فقط — لا تُعرض أبدًا للبائعين أو المشترين كـ«رسوم دفع». بند «الخدمات اللوجستية والمناولة» بنسبة 2.5٪ يغطي فعليًا تكاليف MyFatoorah لدينا: KNET = 200 فلس ثابتة لكل عملية، وVisa/Mastercard/Google Pay/Samsung Pay = 2.5٪، وApple Pay عبر KNET = 220 فلسًا. يغطي أسوأ الحالات (البطاقات)؛ ومبيعات KNET تكلّف أقل بكثير، فيتحوّل الفائض غير المستخدم إلى هامش ربح إضافي.',
     'card.result': 'نتيجة التسعير', 'res.listingPrice': 'سعر البيع', 'res.youEarn': 'مستحقاتك',
@@ -1041,7 +1042,7 @@
     'th.timing': 'التوقيت', 'th.discount': 'الخصم', 'th.newListing': 'السعر الجديد', 'th.commission': 'العمولة', 'th.payout': 'المستحقات',
     'btn.save': 'حفظ في سجلّ الأسعار', 'btn.openQuote': 'إنشاء عرض سعر للبائع',
     'card.categorization': 'تصنيف القطعة',
-    'field.startingPrice': 'سعر البداية (KWD)', 'ph.lstarting': 'ما دفعناه / الأساس',
+    'field.startingPrice': 'سعر البداية (د.ك)', 'ph.lstarting': 'ما دفعناه / الأساس',
     'field.brandTierLow': 'فئة الماركة (ذات وزن منخفض)',
     'ltier.ultra': 'فائقة الفخامة', 'ltier.premium': 'راقية', 'ltier.accessible': 'متوسطة', 'ltier.fastfashion': 'موضة سريعة',
     'note.fastfashion': 'عادةً لا تشتري erlume قطع الموضة السريعة/الماركات غير المعروفة مباشرةً — فالبيع بالعمولة يُسعّرها بإنصاف والبائع يتحمّل مخاطر الاحتفاظ، لا erlume. تابع فقط إذا كانت لهذه القطعة تحديدًا قيمة نادرة أو كلاسيكية أو حرفية حقيقية تبرّر شراءها مباشرةً.',
@@ -1052,14 +1053,14 @@
     'seasonal.na': 'غير منطبق', 'seasonal.in': 'في الموسم', 'seasonal.off': 'خارج الموسم',
     'field.materialQuality': 'الخامة (الجودة)',
     'mat.premium': 'ممتازة', 'mat.standard': 'قياسية', 'mat.low': 'منخفضة',
-    'field.delivery': 'رسوم التوصيل (KWD)', 'field.compAvgOpt': 'متوسط المقارنات (KWD، اختياري)',
+    'field.delivery': 'رسوم التوصيل (د.ك)', 'field.compAvgOpt': 'متوسط المقارنات (د.ك، اختياري)',
     'ph.lcompavg': 'يُرشد الذكاء الاصطناعي إلى موضعه ضمن النطاق',
     'btn.lcomps': 'مقارنات ذكية ← المتوسط',
     'hint.lcomp': 'تسحب من eBay + سجلّ أسعارك وتأخذ متوسط أقرب 3، أو اكتبه يدويًا.',
     'btn.lsuggest': 'اقترح السعر (ذكاء اصطناعي)', 'btn.lcalc': 'احسب (الصيغة فقط)',
     'hint.lcta': '«اقترح» يدع الذكاء الاصطناعي يختار ضمن النطاق ويشرح السبب. «احسب» يستخدم منتصف الصيغة — دون ذكاء اصطناعي، فوري.',
     'card.suggestedPrice': 'السعر المقترح', 'res.suggestedListing': 'سعر البيع المقترح', 'band.prefix': 'النطاق',
-    'field.finalValue': 'القيمة النهائية للقطعة (KWD) — عدّلها للتجاوز، ويتحدّث السعر مباشرةً',
+    'field.finalValue': 'القيمة النهائية للقطعة (د.ك) — عدّلها للتجاوز، ويتحدّث السعر مباشرةً',
     'row.catMultiplier': 'مُضاعِف الفئة', 'row.itemValueBand': 'قيمة القطعة (ضمن النطاق)',
     'row.plusDelivery': '+ التوصيل', 'row.plusCleaning': '+ التنظيف', 'row.listingPriceEq': '= سعر البيع',
     'row.listingBuyerPays': 'سعر البيع (يدفعه المشتري)', 'row.minusStarting': '− سعر البداية (ما دفعناه)',
@@ -1141,13 +1142,13 @@
       'comps.ebayNA': 'واجهة eBay غير مُهيّأة — عرض سجلّ الأسعار الداخلي + الروابط اليدوية فقط.',
       'lcomp.avgPrefix': 'متوسط ', 'lcomp.avgMid': ' مقارنات: ', 'lcomp.avgSuffix': ' (مُدخَل أعلاه).',
       'lcomp.none': 'لم تُعثر على مقارنات — اكتب قيمة يدويًا أو اترك الحقل فارغًا.',
-      'badge.accept': 'قبول — مربح', 'badge.decline': 'رفض — أقل من الحد الأدنى 100 KWD',
-      'badge.above': 'أعلى من الحد الأدنى 100 KWD', 'badge.below': 'أقل من الحد الأدنى 100 KWD',
+      'badge.accept': 'قبول — مربح', 'badge.decline': 'رفض — أقل من الحد الأدنى 100 د.ك',
+      'badge.above': 'أعلى من الحد الأدنى 100 د.ك', 'badge.below': 'أقل من الحد الأدنى 100 د.ك',
       'md.after': 'بعد {n} شهرًا',
-      'label.priceOriginal': 'سعر البيع الأصلي بالتجزئة (KWD)',
-      'label.priceComp': 'سعر مقارنة إعادة البيع (KWD) — سعر حقيبة مستعملة مماثلة وُجدت على الإنترنت',
+      'label.priceOriginal': 'سعر البيع الأصلي بالتجزئة (د.ك)',
+      'label.priceComp': 'سعر مقارنة إعادة البيع (د.ك) — سعر حقيبة مستعملة مماثلة وُجدت على الإنترنت',
       'reason.aiPrefix': 'ذكاء اصطناعي: ',
-      'finalhint': 'النطاق المسموح: {lo} – {hi} KWD. القيم خارجه تُثبَّت على النطاق.',
+      'finalhint': 'النطاق المسموح: {lo} – {hi} د.ك. القيم خارجه تُثبَّت على النطاق.',
       'profitpct.suffix': '٪ عائد على سعر البداية',
       'factor.title': 'كيف شكّلت الخصائص السعر',
       'factor.noEffect': 'لا أثر', 'factor.diminishing': 'تناقص العوائد (سقف التراكم)',
@@ -1497,7 +1498,7 @@
             '<div><div class="c-title">' +
             (c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener">' + c.title + '</a>' : c.title) +
             '</div><div class="c-note">' + c.condition + ' · ' + c.source + (c.similarityNote ? ' — ' + c.similarityNote : '') + '</div></div>' +
-            '<div class="c-price">' + fmt(c.priceKwd) + ' <small>KWD' + (c.priceUsd ? ' · $' + num(Math.round(c.priceUsd)) : '') + '</small></div>';
+            '<div class="c-price">' + fmt(c.priceKwd) + ' <small>' + cur() + (c.priceUsd ? ' · $' + num(Math.round(c.priceUsd)) : '') + '</small></div>';
           list.appendChild(div);
         });
         if (!r.comps.length) {
@@ -1732,7 +1733,7 @@
         '</div>' +
         '<div style="font-size:12px;color:#666;margin-bottom:4px;">' + T('qm.bag') + '</div>' +
         '<input type="text" id="qm-item" style="' + INP + 'margin-bottom:6px;">' +
-        '<div style="font-size:12px;color:#888;margin-bottom:14px;">' + T('qm.payoutPrefix') + '<strong>' + fmt(data.sellerPayout) + ' KWD</strong>' + T('qm.commissionMid') + fmt(data.erlumeCut) + ' KWD</div>' +
+        '<div style="font-size:12px;color:#888;margin-bottom:14px;">' + T('qm.payoutPrefix') + '<strong>' + fmt(data.sellerPayout) + ' ' + cur() + '</strong>' + T('qm.commissionMid') + fmt(data.erlumeCut) + ' ' + cur() + '</div>' +
         '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
           '<button type="button" id="qm-existing" style="' + ON + '">' + T('qm.existing') + '</button>' +
           '<button type="button" id="qm-new" style="' + OFF + '">' + T('qm.new') + '</button>' +
@@ -2036,7 +2037,7 @@
         div.innerHTML = (c.image ? '<img src="' + c.image + '" alt="">' : '') +
           '<div><div class="c-title">' + (c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener">' + c.title + '</a>' : c.title) +
           '</div><div class="c-note">' + c.condition + ' · ' + c.source + '</div></div>' +
-          '<div class="c-price">' + fmt(c.priceKwd) + ' <small>KWD</small></div>';
+          '<div class="c-price">' + fmt(c.priceKwd) + ' <small>' + cur() + '</small></div>';
         list.appendChild(div);
       });
       if (r.avgKwd != null) {
