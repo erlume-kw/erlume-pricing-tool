@@ -980,6 +980,8 @@
       .replace(/([٠-٩])\.([٠-٩])/g, '$1٫$2');
   }
   function num(value) { return (LANG === 'ar') ? arDigits(value) : String(value); }
+  // Currency unit: Latin "KWD" in English, "د.ك" in Arabic.
+  function cur() { return (LANG === 'ar') ? 'د.ك' : 'KWD'; }
 
   var fmt = function (n) { return (n == null || isNaN(n)) ? '—' : num(Number(n).toFixed(3)); };
 
@@ -1503,7 +1505,7 @@
         }
         if (r.avgKwd != null) {
           $('comps-median').style.display = '';
-          $('comps-median').textContent = T('comps.avgPrefix') + fmt(r.avgKwd) + ' KWD' +
+          $('comps-median').textContent = T('comps.avgPrefix') + fmt(r.avgKwd) + ' ' + cur() +
             (r.enoughComps ? T('comps.appliedBelow') : T('comps.oneOnly'));
           if (r.enoughComps) {
             if (getBasis() === 'original') originalPriceMemo = parseFloat($('price').value) || null;
@@ -1606,7 +1608,7 @@
     $('row-cleaning').textContent = fmt(r.cleaningCost);
     $('row-gateway').textContent = fmt(gatewayReserve);
     $('row-total').textContent = num(r.listingPrice.toFixed(3));
-    $('box-listing').textContent = num(r.listingPrice.toFixed(3)) + ' KWD';
+    $('box-listing').textContent = num(r.listingPrice.toFixed(3)) + ' ' + cur();
     $('commission-amount').textContent = fmt(r.erlumeCut);
 
     var badge = $('accept-badge');
@@ -2039,7 +2041,7 @@
       });
       if (r.avgKwd != null) {
         $('l-compavg').value = r.avgKwd;
-        $('l-comphint').textContent = T('lcomp.avgPrefix') + num(r.comps.length) + T('lcomp.avgMid') + fmt(r.avgKwd) + ' KWD' + T('lcomp.avgSuffix');
+        $('l-comphint').textContent = T('lcomp.avgPrefix') + num(r.comps.length) + T('lcomp.avgMid') + fmt(r.avgKwd) + ' ' + cur() + T('lcomp.avgSuffix');
       } else {
         $('l-comphint').textContent = T('lcomp.none');
       }
@@ -2088,11 +2090,11 @@
     // erlume covers.
     var startingPaid = parseFloat($('l-starting').value) || 0;
     var profit = r.listingPrice - startingPaid - r.pickupFee - r.cleaningCost;
-    $('l-profit-listing').textContent = fmt(r.listingPrice) + ' KWD';
-    $('l-profit-starting').textContent = fmt(startingPaid) + ' KWD';
-    $('l-profit-delivery').textContent = fmt(r.pickupFee) + ' KWD';
-    $('l-profit-cleaning').textContent = fmt(r.cleaningCost) + ' KWD';
-    $('l-profit-total').textContent = fmt(profit) + ' KWD';
+    $('l-profit-listing').textContent = fmt(r.listingPrice) + ' ' + cur();
+    $('l-profit-starting').textContent = fmt(startingPaid) + ' ' + cur();
+    $('l-profit-delivery').textContent = fmt(r.pickupFee) + ' ' + cur();
+    $('l-profit-cleaning').textContent = fmt(r.cleaningCost) + ' ' + cur();
+    $('l-profit-total').textContent = fmt(profit) + ' ' + cur();
     $('l-profit-pct').textContent = (startingPaid > 0 ? num((profit / startingPaid * 100).toFixed(1)) : '—') + T('profitpct.suffix');
     var badge = $('l-badge'); badge.style.display = 'inline-block';
     badge.className = 'badge ' + (r.accept ? 'accept' : 'decline');
@@ -2118,8 +2120,8 @@
       var delta = running * (f.multiplier - 1);
       running += delta;
       var label, amt, cls;
-      if (pct > 0) { label = '+' + pct + '%'; amt = '+' + fmt(delta) + ' KWD'; cls = 'up'; }
-      else if (pct < 0) { label = pct + '%'; amt = fmt(delta) + ' KWD'; cls = 'down'; }
+      if (pct > 0) { label = '+' + pct + '%'; amt = '+' + fmt(delta) + ' ' + cur(); cls = 'up'; }
+      else if (pct < 0) { label = pct + '%'; amt = fmt(delta) + ' ' + cur(); cls = 'down'; }
       else { label = T('factor.noEffect'); amt = '—'; cls = 'flat'; }
       return '<tr><td>' + cap(f.attr) + '</td><td>' + f.choice + '</td>' +
         '<td class="effect ' + cls + '">' + label + '</td>' +
@@ -2132,7 +2134,7 @@
       var adjPct = running !== 0 ? Math.round((r.range.mid / running - 1) * 100) : 0;
       var adjCls = stackAdj > 0 ? 'up' : 'down';
       var adjLabel = (adjPct > 0 ? '+' : '') + adjPct + '%';
-      var adjAmt = (stackAdj > 0 ? '+' : '') + fmt(stackAdj) + ' KWD';
+      var adjAmt = (stackAdj > 0 ? '+' : '') + fmt(stackAdj) + ' ' + cur();
       stackRow = '<tr><td>' + T('factor.diminishing') + '</td><td></td>' +
         '<td class="effect ' + adjCls + '">' + adjLabel + '</td>' +
         '<td class="effect ' + adjCls + '">' + adjAmt + '</td>' +
