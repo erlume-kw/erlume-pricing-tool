@@ -430,6 +430,9 @@
     color: var(--charcoal-soft);
     margin-left: 6px;
   }
+  /* Earnings is the headline number now — paint it green so the seller's
+     payout reads as the hero, with listing price demoted to a side stat. */
+  .listing-hero.earn-hero .amount { color: var(--green); }
 
   .badge {
     display: inline-block;
@@ -599,7 +602,9 @@
   html[dir="rtl"] table.log-table td { text-align: right; }
   html[dir="rtl"] table.log-table td.num,
   html[dir="rtl"] table.log-table th.num { text-align: left; }
-  html[dir="rtl"] .commission-line { text-align: left; }
+  /* In RTL the commission note reads right-to-left like the rest of the card —
+     keep it right-aligned (its LTR default is right, which is the RTL start). */
+  html[dir="rtl"] .commission-line { text-align: right; }
 </style>
 </head>
 <body>
@@ -751,9 +756,9 @@
     <section class="card results-card">
       <h2 data-i18n="card.result">Pricing Result</h2>
 
-      <div class="listing-hero">
-        <div class="label" data-i18n="res.listingPrice">Listing Price</div>
-        <div class="amount"><span id="listing-price">0.000</span><small>KWD</small></div>
+      <div class="listing-hero earn-hero">
+        <div class="label" data-i18n="res.youEarn">You'll earn</div>
+        <div class="amount"><span id="hero-earn">0.000</span><small>KWD</small></div>
         <div id="accept-badge" class="badge accept">Accept — profitable</div>
       </div>
 
@@ -772,8 +777,8 @@
       </div>
 
       <div class="payout-box">
-        <div><div class="k" data-i18n="payout.seller">Seller payout</div></div>
-        <div class="v" id="seller-payout">0.000 KWD</div>
+        <div><div class="k" data-i18n="payout.listing">Listing price · buyer pays</div></div>
+        <div class="v" id="box-listing">0.000 KWD</div>
       </div>
       <div class="commission-line"><span data-i18n="commission.prefix">erlume commission:</span> <span id="commission-amount">0.000</span> KWD (<span id="commission-pct">20</span><span data-i18n="commission.suffix">%, min</span> <span id="commission-floor">10</span> KWD)</div>
 
@@ -1008,7 +1013,8 @@
     'field.cleaning': 'تكلفة التنظيف (KWD)',
     'toggle.payment': 'معلومات طريقة الدفع (لا تؤثر على الحساب)',
     'payment.detail': 'للاستخدام الداخلي فقط — لا تُعرض أبدًا للبائعين أو المشترين كـ«رسوم دفع». بند «الخدمات اللوجستية والمناولة» بنسبة 2.5٪ يغطي فعليًا تكاليف MyFatoorah لدينا: KNET = 200 فلس ثابتة لكل عملية، وVisa/Mastercard/Google Pay/Samsung Pay = 2.5٪، وApple Pay عبر KNET = 220 فلسًا. يغطي أسوأ الحالات (البطاقات)؛ ومبيعات KNET تكلّف أقل بكثير، فيتحوّل الفائض غير المستخدم إلى هامش ربح إضافي.',
-    'card.result': 'نتيجة التسعير', 'res.listingPrice': 'سعر البيع',
+    'card.result': 'نتيجة التسعير', 'res.listingPrice': 'سعر البيع', 'res.youEarn': 'مستحقاتك',
+    'payout.listing': 'سعر البيع · يدفعه المشتري',
     'compNote': 'يُستخدم سعر مقارنة إعادة البيع مباشرةً كقيمة سوقية — دون تطبيق منحنى الاحتفاظ أو خصم الحالة، لأن إعلان قطعة مستعملة مماثلة يعكس بالفعل الحالة والاستهلاك الواقعيين.',
     'row.market': 'القيمة السوقية المُقدّرة', 'row.pickup': '+ الاستلام', 'row.cleaning': '+ التنظيف',
     'row.gateway': '+ الخدمات اللوجستية والمناولة (2.5٪)', 'row.total': '= سعر البيع',
@@ -1578,13 +1584,13 @@
     quoteOverride = null; // a fresh calculation supersedes any log-row quote source
     var gatewayReserve = r.listingPrice - r.base;
 
-    $('listing-price').textContent = r.listingPrice.toFixed(3);
+    $('hero-earn').textContent = fmt(r.sellerPayout);
     $('row-market').textContent = fmt(r.marketValue);
     $('row-pickup').textContent = fmt(r.pickupFee);
     $('row-cleaning').textContent = fmt(r.cleaningCost);
     $('row-gateway').textContent = fmt(gatewayReserve);
     $('row-total').textContent = r.listingPrice.toFixed(3);
-    $('seller-payout').textContent = fmt(r.sellerPayout) + ' KWD';
+    $('box-listing').textContent = r.listingPrice.toFixed(3) + ' KWD';
     $('commission-amount').textContent = fmt(r.erlumeCut);
 
     var badge = $('accept-badge');
@@ -1610,7 +1616,7 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + T('md.after').replace('{n}', m.months) + '</td>' +
-        '<td>-' + Math.round(m.discount * 100) + '%</td>' +
+        '<td><bdi dir="ltr">-' + Math.round(m.discount * 100) + '%</bdi></td>' +
         '<td>' + m.listingPrice.toFixed(3) + '</td>' +
         '<td>' + fmt(m.erlumeCut) + '</td>' +
         '<td>' + fmt(m.sellerPayout) + '</td>';
