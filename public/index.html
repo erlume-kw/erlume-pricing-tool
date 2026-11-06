@@ -605,6 +605,10 @@
   /* In RTL the commission note reads right-to-left like the rest of the card —
      keep it right-aligned (its LTR default is right, which is the RTL start). */
   html[dir="rtl"] .commission-line { text-align: right; }
+  /* The log card breaks out wider than the page with a margin-left:50% +
+     translateX(-50%) centering trick — that only centers in LTR. Mirror it in
+     RTL (margin on the right, translate the other way) or it shifts off-screen. */
+  html[dir="rtl"] .log-card { margin-left: 0; margin-right: 50%; transform: translateX(50%); }
 </style>
 </head>
 <body>
