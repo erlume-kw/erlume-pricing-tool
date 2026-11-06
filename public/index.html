@@ -970,7 +970,18 @@
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var fmt = function (n) { return (n == null || isNaN(n)) ? '—' : Number(n).toFixed(3); };
+
+  // Arabic-Indic numerals: "219.50" → "٢١٩٫٥٠". Only applied when the Arabic UI
+  // is active (num()); the backend, the generated seller quote, and all /api/*
+  // payloads keep Western digits. Mirrors the storefront's useNumerals helper.
+  function arDigits(value) {
+    return String(value)
+      .replace(/[0-9]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[Number(d)]; })
+      .replace(/([٠-٩])\.([٠-٩])/g, '$1٫$2');
+  }
+  function num(value) { return (LANG === 'ar') ? arDigits(value) : String(value); }
+
+  var fmt = function (n) { return (n == null || isNaN(n)) ? '—' : num(Number(n).toFixed(3)); };
 
   // ── i18n (staff UI only) ────────────────────────────────────────────────────
   // The INTERFACE toggles between English and Arabic. Everything the backend
@@ -1195,17 +1206,18 @@
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       if (!el.hasAttribute('data-i18n-orig')) el.setAttribute('data-i18n-orig', el.innerHTML);
       var k = el.getAttribute('data-i18n');
-      if (LANG === 'ar' && AR[k] != null) el.textContent = AR[k];
+      if (LANG === 'ar' && AR[k] != null) el.textContent = arDigits(AR[k]);
       else el.innerHTML = el.getAttribute('data-i18n-orig');
     });
     // Placeholders.
     document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
       if (!el.hasAttribute('data-ph-orig')) el.setAttribute('data-ph-orig', el.getAttribute('placeholder') || '');
       var k = el.getAttribute('data-i18n-ph');
-      el.setAttribute('placeholder', (LANG === 'ar' && AR[k] != null) ? AR[k] : el.getAttribute('data-ph-orig'));
+      el.setAttribute('placeholder', (LANG === 'ar' && AR[k] != null) ? arDigits(AR[k]) : el.getAttribute('data-ph-orig'));
     });
     var tg = $('lang-toggle'); if (tg) tg.textContent = (LANG === 'ar') ? 'EN' : 'عربي';
     // Refresh JS-rendered regions so their strings pick up the language.
+    if (typeof applyConfigLabels === 'function') applyConfigLabels();
     if (typeof updateBasisUI === 'function') updateBasisUI();
     if (typeof lastPrice !== 'undefined' && lastPrice && typeof render === 'function') render(lastPrice);
     if (typeof lastListing !== 'undefined' && lastListing && typeof renderListing === 'function') renderListing(lastListing);
@@ -1483,7 +1495,7 @@
             '<div><div class="c-title">' +
             (c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener">' + c.title + '</a>' : c.title) +
             '</div><div class="c-note">' + c.condition + ' · ' + c.source + (c.similarityNote ? ' — ' + c.similarityNote : '') + '</div></div>' +
-            '<div class="c-price">' + fmt(c.priceKwd) + ' <small>KWD' + (c.priceUsd ? ' · $' + Math.round(c.priceUsd) : '') + '</small></div>';
+            '<div class="c-price">' + fmt(c.priceKwd) + ' <small>KWD' + (c.priceUsd ? ' · $' + num(Math.round(c.priceUsd)) : '') + '</small></div>';
           list.appendChild(div);
         });
         if (!r.comps.length) {
@@ -1593,8 +1605,8 @@
     $('row-pickup').textContent = fmt(r.pickupFee);
     $('row-cleaning').textContent = fmt(r.cleaningCost);
     $('row-gateway').textContent = fmt(gatewayReserve);
-    $('row-total').textContent = r.listingPrice.toFixed(3);
-    $('box-listing').textContent = r.listingPrice.toFixed(3) + ' KWD';
+    $('row-total').textContent = num(r.listingPrice.toFixed(3));
+    $('box-listing').textContent = num(r.listingPrice.toFixed(3)) + ' KWD';
     $('commission-amount').textContent = fmt(r.erlumeCut);
 
     var badge = $('accept-badge');
@@ -1619,9 +1631,9 @@
     (r.markdowns || []).forEach(function (m) {
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td>' + T('md.after').replace('{n}', m.months) + '</td>' +
-        '<td><bdi dir="ltr">-' + Math.round(m.discount * 100) + '%</bdi></td>' +
-        '<td>' + m.listingPrice.toFixed(3) + '</td>' +
+        '<td>' + T('md.after').replace('{n}', num(m.months)) + '</td>' +
+        '<td><bdi dir="ltr">-' + num(Math.round(m.discount * 100)) + '%</bdi></td>' +
+        '<td>' + num(m.listingPrice.toFixed(3)) + '</td>' +
         '<td>' + fmt(m.erlumeCut) + '</td>' +
         '<td>' + fmt(m.sellerPayout) + '</td>';
       mb.appendChild(tr);
@@ -1842,7 +1854,7 @@
         if (!entries.length) { box.innerHTML = '<span class="log-empty">' + T('log.empty') + '</span>'; return; }
         var rows = entries.map(function (e, i) {
           return '<tr>' +
-            '<td>' + e.createdAt.slice(0, 10) + '</td>' +
+            '<td>' + num(e.createdAt.slice(0, 10)) + '</td>' +
             '<td>' + [e.brand, e.model, e.size].filter(Boolean).join(' ') + '</td>' +
             '<td>' + (e.condition || '') + '</td>' +
             '<td class="num">' + (e.originalPrice != null ? fmt(e.originalPrice) : '—') + '</td>' +
@@ -1937,13 +1949,20 @@
   };
 
   // Show the live commission rate / floor from config (no hardcoded %).
-  fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
-    if (cfg.commissionRate != null) {
+  // Cached so applyLang() can re-render the digits when the language toggles.
+  var lastCfg = null;
+  function applyConfigLabels() {
+    if (!lastCfg) return;
+    if (lastCfg.commissionRate != null) {
       // l-pct2 (erlume Listing's old "commission %" line) was removed —
       // Listing mode has no commission, it's erlume's own profit on a flip.
-      $('commission-pct').textContent = Math.round(cfg.commissionRate * 100);
+      $('commission-pct').textContent = num(Math.round(lastCfg.commissionRate * 100));
     }
-    if (cfg.commissionFloorKWD != null) $('commission-floor').textContent = cfg.commissionFloorKWD;
+    if (lastCfg.commissionFloorKWD != null) $('commission-floor').textContent = num(lastCfg.commissionFloorKWD);
+  }
+  fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
+    lastCfg = cfg;
+    applyConfigLabels();
   }).catch(function () {});
 
   // ---- tabs (navbar links) ----------------------------------------------------------
@@ -2020,7 +2039,7 @@
       });
       if (r.avgKwd != null) {
         $('l-compavg').value = r.avgKwd;
-        $('l-comphint').textContent = T('lcomp.avgPrefix') + r.comps.length + T('lcomp.avgMid') + fmt(r.avgKwd) + ' KWD' + T('lcomp.avgSuffix');
+        $('l-comphint').textContent = T('lcomp.avgPrefix') + num(r.comps.length) + T('lcomp.avgMid') + fmt(r.avgKwd) + ' KWD' + T('lcomp.avgSuffix');
       } else {
         $('l-comphint').textContent = T('lcomp.none');
       }
@@ -2054,14 +2073,14 @@
 
   function renderListing(r) {
     lastListing = r;
-    $('l-listing').textContent = r.listingPrice.toFixed(3);
+    $('l-listing').textContent = num(r.listingPrice.toFixed(3));
     $('l-low').textContent = fmt(r.range.low);
     $('l-high').textContent = fmt(r.range.high);
-    $('l-mult').textContent = '×' + r.range.multiplier;
+    $('l-mult').textContent = '×' + num(r.range.multiplier);
     $('l-market').textContent = fmt(r.suggestedMarketValue);
     $('l-pdelivery').textContent = fmt(r.pickupFee);
     $('l-pcleaning').textContent = fmt(r.cleaningCost);
-    $('l-ptotal').textContent = r.listingPrice.toFixed(3);
+    $('l-ptotal').textContent = num(r.listingPrice.toFixed(3));
     // Real profit for a buy-to-resell bag: erlume already owns it, so this is
     // NOT the consignment sellerPayout/erlumeCut split (there is no seller to
     // pay out — "everything goes back to us"). It's simply what the buyer
@@ -2074,7 +2093,7 @@
     $('l-profit-delivery').textContent = fmt(r.pickupFee) + ' KWD';
     $('l-profit-cleaning').textContent = fmt(r.cleaningCost) + ' KWD';
     $('l-profit-total').textContent = fmt(profit) + ' KWD';
-    $('l-profit-pct').textContent = (startingPaid > 0 ? (profit / startingPaid * 100).toFixed(1) : '—') + T('profitpct.suffix');
+    $('l-profit-pct').textContent = (startingPaid > 0 ? num((profit / startingPaid * 100).toFixed(1)) : '—') + T('profitpct.suffix');
     var badge = $('l-badge'); badge.style.display = 'inline-block';
     badge.className = 'badge ' + (r.accept ? 'accept' : 'decline');
     badge.textContent = r.accept ? T('badge.above') : T('badge.below');
