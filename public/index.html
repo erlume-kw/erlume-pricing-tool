@@ -609,6 +609,15 @@
      translateX(-50%) centering trick — that only centers in LTR. Mirror it in
      RTL (margin on the right, translate the other way) or it shifts off-screen. */
   html[dir="rtl"] .log-card { margin-left: 0; margin-right: 50%; transform: translateX(50%); }
+
+  /* ── Staff vs seller view ──────────────────────────────────────────────────
+     Internal-only bits (erlume profit, margin notes, "profitable" wording)
+     carry .internal-only. We default to the staff/internal view; flipping to
+     seller view adds .seller-view to <body> and hides them, so a screenshot of
+     the result card is safe to send to a seller. */
+  body.seller-view .internal-only { display: none !important; }
+  .nav-link.view-toggle { font-weight: 600; }
+  .nav-link.view-toggle.seller { color: var(--gold); border-color: var(--gold); }
 </style>
 </head>
 <body>
@@ -621,6 +630,7 @@
     <div class="nav-links">
       <button type="button" class="nav-link active" data-tab="consignment" data-i18n="nav.consignment">Consignment</button>
       <button type="button" class="nav-link" data-tab="listing" data-i18n="nav.listing">erlume Listing</button>
+      <button type="button" class="nav-link view-toggle" id="view-toggle" title="Toggle internal profit &amp; notes (staff) vs a seller-safe view">Internal view</button>
       <button type="button" class="nav-link lang-toggle" id="lang-toggle" title="العربية / English">عربي</button>
     </div>
   </div>
@@ -706,10 +716,11 @@
       <div class="field">
         <label class="field-label" data-i18n="field.tier">Brand tier</label>
         <select id="tier">
-          <option value="ultra" data-i18n="tier.ultra">Ultra-luxury (Hermès, Chanel, Louis Vuitton)</option>
-          <option value="premium" selected data-i18n="tier.premium">Premium (Gucci, Prada, Dior, YSL)</option>
+          <option value="ultra" data-i18n="tier.ultra">Ultra-luxury (Hermès, Chanel)</option>
+          <option value="prestige" data-i18n="tier.prestige">Prestige (Louis Vuitton, Dior, Goyard)</option>
+          <option value="premium" selected data-i18n="tier.premium">Premium (Gucci, Prada, Balenciaga)</option>
           <option value="accessible" data-i18n="tier.accessible">Accessible (Coach, Michael Kors, Kate Spade)</option>
-          <option value="highstreet" data-i18n="tier.highstreet">High-street & other</option>
+          <option value="fastfashion" data-i18n="tier.other">Other</option>
         </select>
         <div class="ultra-note" id="ultra-note" data-i18n="note.ultra">Ultra-luxury bags (Chanel, Hermès…) often sell <b>above</b> their original retail price. Run AI comps or check a resale comp with the search buttons — if the comp is higher than the retail-based estimate, switch to "resale comp" and use the comp price instead.</div>
       </div>
@@ -743,7 +754,7 @@
         <input type="number" id="cleaning" min="0" step="0.5" value="0">
       </div>
 
-      <div class="field">
+      <div class="field internal-only">
         <label class="toggle-note" id="payment-toggle-label">
           <input type="checkbox" id="payment-toggle">
           <span data-i18n="toggle.payment">Payment method info (does not affect calculation)</span>
@@ -843,9 +854,10 @@
           <div class="field"><label class="field-label" data-i18n="field.brandTierLow">Brand tier (weighted low)</label>
             <select id="l-brandtier">
               <option value="ultra" data-i18n="ltier.ultra">Ultra-luxury</option>
+              <option value="prestige" data-i18n="ltier.prestige">Prestige</option>
               <option value="premium" selected data-i18n="ltier.premium">Premium</option>
               <option value="accessible" data-i18n="ltier.accessible">Accessible</option>
-              <option value="fastfashion" data-i18n="ltier.fastfashion">Fast Fashion</option>
+              <option value="fastfashion" data-i18n="ltier.other">Other</option>
             </select>
           </div>
         </div>
@@ -932,14 +944,14 @@
              seller/erlume commission) doesn't correspond to anything real
              here. Real profit is simply what the buyer eventually pays minus
              what erlume paid to acquire the bag and the real costs it covers. -->
-        <div class="breakdown">
+        <div class="breakdown internal-only">
           <div class="brow"><span class="k" data-i18n="row.listingBuyerPays">Listing price (buyer pays)</span><span class="v" id="l-profit-listing">—</span></div>
           <div class="brow"><span class="k" data-i18n="row.minusStarting">− Starting price (what we paid)</span><span class="v" id="l-profit-starting">—</span></div>
           <div class="brow"><span class="k" data-i18n="row.minusDelivery">− Delivery</span><span class="v" id="l-profit-delivery">—</span></div>
           <div class="brow"><span class="k" data-i18n="row.minusCleaning">− Cleaning</span><span class="v" id="l-profit-cleaning">—</span></div>
           <div class="brow total"><span class="k" data-i18n="row.erlumeProfit">= erlume profit</span><span class="v" id="l-profit-total">—</span></div>
         </div>
-        <div class="commission-line" id="l-profit-pct">—% return on starting price</div>
+        <div class="commission-line internal-only" id="l-profit-pct">—% return on starting price</div>
         <div id="l-factors" class="md"></div>
         <div class="cta-row" style="margin-top:18px">
           <button type="button" class="btn" id="l-save" data-i18n="btn.lsave">Save to price log</button>
@@ -993,6 +1005,11 @@
   // and translated from AR below; strings built in JS come from STR[lang].
   var LANG = (function () { try { return localStorage.getItem('PRICING_LANG') || 'en'; } catch (e) { return 'en'; } })();
 
+  // Staff (internal) vs seller view. Default: staff ON — this is our tool, so we
+  // see the profit/margin numbers. Flip it to produce a seller-safe screenshot
+  // of the result card. Persisted so it survives reloads.
+  var STAFF = (function () { try { return localStorage.getItem('PRICING_STAFF') !== '0'; } catch (e) { return true; } })();
+
   // Arabic for every static data-i18n / data-i18n-ph key. English is kept in the
   // markup itself (cached on first switch), so going back to English is lossless.
   var AR = {
@@ -1017,10 +1034,11 @@
     'basis.comp': 'لديّ سعر مقارنة لإعادة البيع (حقيبة مستعملة مماثلة وُجدت على الإنترنت)',
     'ph.price': 'مثال: 400',
     'field.tier': 'فئة الماركة',
-    'tier.ultra': 'فائقة الفخامة (Hermès، Chanel، Louis Vuitton)',
-    'tier.premium': 'راقية (Gucci، Prada، Dior، YSL)',
+    'tier.ultra': 'فائقة الفخامة (Hermès، Chanel)',
+    'tier.prestige': 'مرموقة (Louis Vuitton، Dior، Goyard)',
+    'tier.premium': 'راقية (Gucci، Prada، Balenciaga)',
     'tier.accessible': 'متوسطة (Coach، Michael Kors، Kate Spade)',
-    'tier.highstreet': 'تجارية وأخرى',
+    'tier.other': 'أخرى',
     'note.ultra': 'الحقائب فائقة الفخامة (Chanel، Hermès…) غالبًا ما تُباع بسعر أعلى من سعرها الأصلي. شغّل المقارنات الذكية أو تحقّق من سعر مقارنة بأزرار البحث — إذا كان سعر المقارنة أعلى من التقدير المبني على سعر التجزئة، فانتقل إلى «مقارنة إعادة البيع» واستخدم سعر المقارنة بدلًا من ذلك.',
     'field.year': 'سنة الشراء (اختياري)', 'ph.year': 'مثال: 2023',
     'hint.year': 'اترك الحقل فارغًا إذا كانت غير معروفة ← سنفترض عمرًا من 3 إلى 5 سنوات.',
@@ -1044,7 +1062,7 @@
     'card.categorization': 'تصنيف القطعة',
     'field.startingPrice': 'سعر البداية (د.ك)', 'ph.lstarting': 'ما دفعناه / الأساس',
     'field.brandTierLow': 'فئة الماركة (ذات وزن منخفض)',
-    'ltier.ultra': 'فائقة الفخامة', 'ltier.premium': 'راقية', 'ltier.accessible': 'متوسطة', 'ltier.fastfashion': 'موضة سريعة',
+    'ltier.ultra': 'فائقة الفخامة', 'ltier.prestige': 'مرموقة', 'ltier.premium': 'راقية', 'ltier.accessible': 'متوسطة', 'ltier.other': 'أخرى',
     'note.fastfashion': 'عادةً لا تشتري erlume قطع الموضة السريعة/الماركات غير المعروفة مباشرةً — فالبيع بالعمولة يُسعّرها بإنصاف والبائع يتحمّل مخاطر الاحتفاظ، لا erlume. تابع فقط إذا كانت لهذه القطعة تحديدًا قيمة نادرة أو كلاسيكية أو حرفية حقيقية تبرّر شراءها مباشرةً.',
     'field.rare': 'نادرة', 'opt.no': 'لا', 'opt.yes': 'نعم',
     'field.vintage': 'كلاسيكية (فينتدج)',
@@ -1092,7 +1110,9 @@
       'lcomp.avgPrefix': 'Average of ', 'lcomp.avgMid': ' comps: ', 'lcomp.avgSuffix': ' (filled in above).',
       'lcomp.none': 'No comps found — type a value manually or leave blank.',
       'badge.accept': 'Accept — profitable', 'badge.decline': 'Decline — below the 100 KWD minimum',
+      'badge.acceptSeller': 'Accepted', 'badge.declineSeller': 'Below our minimum',
       'badge.above': 'Above 100 KWD minimum', 'badge.below': 'Below 100 KWD minimum',
+      'view.staff': 'Internal view', 'view.seller': 'Seller view',
       'md.after': 'After {n} months',
       'label.priceOriginal': 'Original retail price (KWD)',
       'label.priceComp': 'Resale comp price (KWD) — price of a comparable used bag found online',
@@ -1143,7 +1163,9 @@
       'lcomp.avgPrefix': 'متوسط ', 'lcomp.avgMid': ' مقارنات: ', 'lcomp.avgSuffix': ' (مُدخَل أعلاه).',
       'lcomp.none': 'لم تُعثر على مقارنات — اكتب قيمة يدويًا أو اترك الحقل فارغًا.',
       'badge.accept': 'قبول — مربح', 'badge.decline': 'رفض — أقل من الحد الأدنى 100 د.ك',
+      'badge.acceptSeller': 'مقبول', 'badge.declineSeller': 'أقل من الحد الأدنى',
       'badge.above': 'أعلى من الحد الأدنى 100 د.ك', 'badge.below': 'أقل من الحد الأدنى 100 د.ك',
+      'view.staff': 'عرض داخلي', 'view.seller': 'عرض البائع',
       'md.after': 'بعد {n} شهرًا',
       'label.priceOriginal': 'سعر البيع الأصلي بالتجزئة (د.ك)',
       'label.priceComp': 'سعر مقارنة إعادة البيع (د.ك) — سعر حقيبة مستعملة مماثلة وُجدت على الإنترنت',
@@ -1219,6 +1241,7 @@
       el.setAttribute('placeholder', (LANG === 'ar' && AR[k] != null) ? arDigits(AR[k]) : el.getAttribute('data-ph-orig'));
     });
     var tg = $('lang-toggle'); if (tg) tg.textContent = (LANG === 'ar') ? 'EN' : 'عربي';
+    if (typeof applyView === 'function') applyView();
     // Refresh JS-rendered regions so their strings pick up the language.
     if (typeof applyConfigLabels === 'function') applyConfigLabels();
     if (typeof updateBasisUI === 'function') updateBasisUI();
@@ -1615,10 +1638,11 @@
     var badge = $('accept-badge');
     if (r.accept) {
       badge.className = 'badge accept';
-      badge.textContent = T('badge.accept');
+      // "profitable" is internal — the seller view shows a plain "Accepted".
+      badge.textContent = STAFF ? T('badge.accept') : T('badge.acceptSeller');
     } else {
       badge.className = 'badge decline';
-      badge.textContent = T('badge.decline');
+      badge.textContent = STAFF ? T('badge.decline') : T('badge.declineSeller');
     }
 
     var warn = $('server-warning');
@@ -2197,6 +2221,25 @@
   // Language toggle (عربي / EN) — persists in localStorage, flips the whole UI + direction.
   var langToggle = $('lang-toggle');
   if (langToggle) langToggle.addEventListener('click', function () { applyLang(LANG === 'ar' ? 'en' : 'ar'); });
+
+  // Staff/seller view toggle — show or hide internal profit & margin notes, and
+  // swap the "profitable" wording for a plain "Accepted" in the seller view.
+  function applyView() {
+    document.body.classList.toggle('seller-view', !STAFF);
+    var vt = $('view-toggle');
+    if (vt) {
+      vt.textContent = STAFF ? T('view.staff') : T('view.seller');
+      vt.classList.toggle('seller', !STAFF);
+    }
+    // Re-render so the accept/decline badge text follows the current view.
+    if (typeof lastPrice !== 'undefined' && lastPrice && typeof render === 'function') render(lastPrice);
+  }
+  var viewToggle = $('view-toggle');
+  if (viewToggle) viewToggle.addEventListener('click', function () {
+    STAFF = !STAFF;
+    try { localStorage.setItem('PRICING_STAFF', STAFF ? '1' : '0'); } catch (e) {}
+    applyView();
+  });
 
   updateBasisUI();
   toggleUltra();
