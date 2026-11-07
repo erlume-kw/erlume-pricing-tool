@@ -1285,26 +1285,72 @@
   var _rawFetch = window.fetch.bind(window);
   function getToken() { return localStorage.getItem('PRICING_TOKEN') || ''; }
   function setToken(t) { if (t) { localStorage.setItem('PRICING_TOKEN', t); } else { localStorage.removeItem('PRICING_TOKEN'); } }
+  // The refresh token (30-day, rotating) lets the tool renew the short-lived
+  // access token silently, so staff aren't kicked to the login screen every
+  // 15 minutes. Stored alongside the access token; cleared together on sign-out.
+  function getRefresh() { return localStorage.getItem('PRICING_REFRESH') || ''; }
+  function setRefresh(t) { if (t) { localStorage.setItem('PRICING_REFRESH', t); } else { localStorage.removeItem('PRICING_REFRESH'); } }
+
+  // Single in-flight refresh promise: if several requests 401 at once, they all
+  // await ONE refresh instead of each rotating (and invalidating) the token.
+  var _refreshing = null;
+  function refreshAccessToken() {
+    if (_refreshing) return _refreshing;
+    var rt = getRefresh();
+    if (!rt) return Promise.resolve(false);
+    _refreshing = _rawFetch(API_BASE + '/api/auth/refresh', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: rt })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (o) {
+        if (o.ok && o.d && o.d.accessToken) {
+          setToken(o.d.accessToken);
+          if (o.d.refreshToken) setRefresh(o.d.refreshToken); // rotation
+          return true;
+        }
+        setToken(''); setRefresh(''); // refresh token itself is dead
+        return false;
+      })
+      .catch(function () { return false; })
+      .then(function (res) { _refreshing = null; return res; });
+    return _refreshing;
+  }
 
   // Route the tool's own '/api/x' calls to '<backend>/api/pricing-tool/x' and
   // attach the admin token. Absolute URLs (e.g. the login call) pass through.
   window.fetch = function (input, init) {
     init = init || {};
-    if (typeof input === 'string' && input.indexOf('/api/') === 0) {
-      input = API_BASE + '/api/pricing-tool' + input.slice(4); // '/api/x' -> '/api/pricing-tool/x'
-      var headers = new Headers(init.headers || {});
+    if (typeof input !== 'string' || input.indexOf('/api/') !== 0) return _rawFetch(input, init);
+    var url = API_BASE + '/api/pricing-tool' + input.slice(4); // '/api/x' -> '/api/pricing-tool/x'
+    var origHeaders = init.headers || {};
+    // One attempt = fresh Authorization header + the (unchanged) init body, so
+    // the request can be replayed after a token refresh.
+    var attempt = function () {
+      var headers = new Headers(origHeaders);
       var tok = getToken();
       if (tok) headers.set('Authorization', 'Bearer ' + tok);
       init.headers = headers;
-      return _rawFetch(input, init).then(function (res) {
-        if (res.status === 401 || res.status === 403) {
+      return _rawFetch(url, init);
+    };
+    return attempt().then(function (res) {
+      if (res.status !== 401 && res.status !== 403) return res;
+      // Access token likely just expired — try a silent refresh, then replay once.
+      return refreshAccessToken().then(function (ok) {
+        if (!ok) {
           setToken('');
           showLogin('Session expired or your account is not an admin — please sign in.');
+          return res;
         }
-        return res;
+        return attempt().then(function (res2) {
+          if (res2.status === 401 || res2.status === 403) {
+            setToken('');
+            showLogin('Session expired or your account is not an admin — please sign in.');
+          }
+          return res2;
+        });
       });
-    }
-    return _rawFetch(input, init);
+    });
   };
 
   // Minimal admin login overlay (built in JS so no HTML markup changes needed).
@@ -1335,6 +1381,7 @@
         .then(function (o) {
           if (!o.ok || !o.d.accessToken) { msg.textContent = (o.d && o.d.error) || 'Sign in failed.'; return; }
           setToken(o.d.accessToken);
+          if (o.d.refreshToken) setRefresh(o.d.refreshToken); // keep the session alive past 15 min
           location.reload();
         })
         .catch(function () { msg.textContent = 'Could not reach backend at ' + API_BASE + '.'; });
@@ -1351,11 +1398,14 @@
     b.style.cssText = 'font-family:inherit;font-size:0.82rem;cursor:pointer;padding:8px 14px;margin-left:8px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:transparent;color:#8a8a8a;transition:all .15s;';
     b.addEventListener('mouseenter', function () { b.style.color = '#c0654f'; b.style.borderColor = 'rgba(192,101,79,.4)'; });
     b.addEventListener('mouseleave', function () { b.style.color = '#8a8a8a'; b.style.borderColor = 'rgba(0,0,0,.12)'; });
-    b.addEventListener('click', function () { setToken(''); location.reload(); });
+    b.addEventListener('click', function () { setToken(''); setRefresh(''); location.reload(); });
     host.appendChild(b);
   }
 
-  if (!getToken()) { showLogin(); } else { addLogout(); }
+  // Show the login overlay only when there's no way back in. If the access token
+  // is gone/expired but a refresh token remains, the first API call refreshes it
+  // silently, so the staff member stays signed in.
+  if (!getToken() && !getRefresh()) { showLogin(); } else { addLogout(); }
   // ── end backend wiring ──────────────────────────────────────────────────────
 
   // Surface any uncaught JS error visibly, so nothing fails silently.
