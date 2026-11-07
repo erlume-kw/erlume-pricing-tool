@@ -795,7 +795,7 @@
         <div><div class="k" data-i18n="payout.listing">Listing price · buyer pays</div></div>
         <div class="v" id="box-listing">0.000 KWD</div>
       </div>
-      <div class="commission-line"><span data-i18n="commission.prefix">erlume commission:</span> <span id="commission-amount">0.000</span> <span data-i18n="unit.kwd">KWD</span> (<span id="commission-pct">20</span><span data-i18n="commission.suffix">%, min</span> <span id="commission-floor">10</span> <span data-i18n="unit.kwd">KWD</span>)</div>
+      <div class="commission-line"><span data-i18n="commission.prefix">erlume commission:</span> <span id="commission-amount">0.000</span> <span data-i18n="unit.kwd">KWD</span> (<span id="commission-pct">20</span><span data-i18n="commission.suffix">%, min</span> <span id="commission-floor">10</span> <span data-i18n="unit.kwd">KWD</span><span data-i18n="commission.capMid">, max</span> <span id="commission-cap">200</span> <span data-i18n="unit.kwd">KWD</span>)</div>
 
       <h3 class="section-title" data-i18n="section.markdown">Markdown Schedule (if unsold)</h3>
       <table class="markdown-table">
@@ -1055,7 +1055,7 @@
     'row.market': 'القيمة السوقية المُقدّرة', 'row.pickup': '+ الاستلام', 'row.cleaning': '+ التنظيف',
     'row.gateway': '+ الخدمات اللوجستية والمناولة (2.5٪)', 'row.total': '= سعر البيع',
     'payout.seller': 'مستحقات البائع',
-    'commission.prefix': 'عمولة erlume:', 'commission.suffix': '٪، بحد أدنى',
+    'commission.prefix': 'عمولة erlume:', 'commission.suffix': '٪، بحد أدنى', 'commission.capMid': '، بحد أقصى',
     'section.markdown': 'جدول التخفيضات (إن لم تُبَع)',
     'th.timing': 'التوقيت', 'th.discount': 'الخصم', 'th.newListing': 'السعر الجديد', 'th.commission': 'العمولة', 'th.payout': 'المستحقات',
     'btn.save': 'حفظ في سجلّ الأسعار', 'btn.openQuote': 'إنشاء عرض سعر للبائع',
@@ -1986,6 +1986,7 @@
       $('commission-pct').textContent = num(Math.round(lastCfg.commissionRate * 100));
     }
     if (lastCfg.commissionFloorKWD != null) $('commission-floor').textContent = num(lastCfg.commissionFloorKWD);
+    if (lastCfg.commissionCapKWD != null) $('commission-cap').textContent = num(lastCfg.commissionCapKWD);
   }
   fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
     lastCfg = cfg;
