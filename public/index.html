@@ -1953,8 +1953,8 @@
               // treat missing delivery/cleaning as 0.
               ? fmt(e.listingPrice - (e.originalPrice || 0) - (e.deliveryFee || 0) - (e.cleaningCost || 0)) + ' <span class="basis-tag">' + T('tag.profit') + '</span>'
               : fmt(e.sellerPayout) + ' <span class="basis-tag">' + T('tag.payout') + '</span>') + '</td>' +
-            '<td>' + ((e.source === 'quote' || e.estimateNumber)
-              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;" title="' + (e.estimateNumber || '') + '">' + T('tag.quote') + '</span>'
+            '<td>' + (e.estimateNumber
+              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;" title="' + e.estimateNumber + '">' + T('tag.quote') + '</span>'
               : (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>')) + '</td>' +
             '<td style="white-space:nowrap;text-align:right;"><button type="button" class="menu-btn" data-i="' + i + '" title="Actions" aria-label="Actions">⋮</button></td>' +
             '</tr>';
