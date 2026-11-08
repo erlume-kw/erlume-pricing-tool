@@ -1129,7 +1129,11 @@
       'toast.dlFailedPrefix': 'Download failed: ',
       'confirm.delTitle': 'Delete entry?', 'confirm.delText': 'This removes it from the price log permanently.',
       'confirm.del': 'Delete', 'confirm.keep': 'Keep',
-      'rm.generateQuote': 'Generate quote', 'rm.delete': 'Delete',
+      'rm.generateQuote': 'Generate quote', 'rm.edit': 'Edit', 'rm.delete': 'Delete',
+      'em.title': 'Edit log entry', 'em.brand': 'Brand', 'em.model': 'Model', 'em.size': 'Size',
+      'em.condition': 'Condition', 'em.listing': 'Listing price (KWD)', 'em.payout': 'Seller payout (KWD)',
+      'em.notes': 'Notes', 'em.save': 'Save changes', 'em.saving': 'Saving…', 'em.saved': 'Entry updated',
+      'em.needBrandModel': 'Brand and model are required.',
       'log.empty': 'No bags priced yet.',
       'log.th.date': 'Date', 'log.th.bag': 'Bag', 'log.th.condition': 'Condition', 'log.th.retail': 'Retail',
       'log.th.compAvg': 'Comp avg.', 'log.th.listing': 'Listing', 'log.th.payoutProfit': 'Payout / Profit',
@@ -1182,7 +1186,11 @@
       'toast.dlFailedPrefix': 'فشل التنزيل: ',
       'confirm.delTitle': 'حذف السجلّ؟', 'confirm.delText': 'سيؤدي هذا إلى إزالته من سجلّ الأسعار نهائيًا.',
       'confirm.del': 'حذف', 'confirm.keep': 'إبقاء',
-      'rm.generateQuote': 'إنشاء عرض سعر', 'rm.delete': 'حذف',
+      'rm.generateQuote': 'إنشاء عرض سعر', 'rm.edit': 'تعديل', 'rm.delete': 'حذف',
+      'em.title': 'تعديل السجلّ', 'em.brand': 'الماركة', 'em.model': 'الموديل', 'em.size': 'الحجم',
+      'em.condition': 'الحالة', 'em.listing': 'سعر البيع (د.ك)', 'em.payout': 'مستحقات البائع (د.ك)',
+      'em.notes': 'ملاحظات', 'em.save': 'حفظ التعديلات', 'em.saving': 'جارٍ الحفظ…', 'em.saved': 'تم تحديث السجلّ',
+      'em.needBrandModel': 'الماركة والموديل مطلوبان.',
       'log.empty': 'لم تُسعّر أي حقيبة بعد.',
       'log.th.date': 'التاريخ', 'log.th.bag': 'الحقيبة', 'log.th.condition': 'الحالة', 'log.th.retail': 'التجزئة',
       'log.th.compAvg': 'متوسط المقارنة', 'log.th.listing': 'البيع', 'log.th.payoutProfit': 'المستحقات / الربح',
@@ -1883,7 +1891,7 @@
       var msg = g('qm-msg'); msg.innerHTML = '';
       var itemName = g('qm-item').value.trim();
       if (!itemName) { showToast(T('qm.enterBag'), 'error'); g('qm-item').focus(); return; }
-      var body = { bagName: itemName, brand: data.brand || '', model: data.model || '', listingPrice: data.listingPrice, erlumeCut: data.erlumeCut, sellerPayout: data.sellerPayout, skipLog: !!data.skipLog };
+      var body = { bagName: itemName, brand: data.brand || '', model: data.model || '', listingPrice: data.listingPrice, erlumeCut: data.erlumeCut, sellerPayout: data.sellerPayout, skipLog: !!data.skipLog, logId: data.logId || undefined };
       if (mode === 'existing') {
         if (!selectedSeller) { showToast(T('qm.selectSeller'), 'error'); g('qm-search').focus(); return; }
         body.sellerId = selectedSeller._id;
@@ -1945,8 +1953,8 @@
               // treat missing delivery/cleaning as 0.
               ? fmt(e.listingPrice - (e.originalPrice || 0) - (e.deliveryFee || 0) - (e.cleaningCost || 0)) + ' <span class="basis-tag">' + T('tag.profit') + '</span>'
               : fmt(e.sellerPayout) + ' <span class="basis-tag">' + T('tag.payout') + '</span>') + '</td>' +
-            '<td>' + (e.source === 'quote'
-              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;">' + T('tag.quote') + '</span>'
+            '<td>' + ((e.source === 'quote' || e.estimateNumber)
+              ? '<span style="font-size:11px;background:#f0e4df;color:#c0654f;padding:2px 9px;border-radius:10px;font-weight:600;" title="' + (e.estimateNumber || '') + '">' + T('tag.quote') + '</span>'
               : (e.accepted ? '<span style="color:var(--green);font-weight:700">✓</span>' : '<span style="color:var(--red);font-weight:700">✕</span>')) + '</td>' +
             '<td style="white-space:nowrap;text-align:right;"><button type="button" class="menu-btn" data-i="' + i + '" title="Actions" aria-label="Actions">⋮</button></td>' +
             '</tr>';
@@ -1971,6 +1979,7 @@
       brand: e.brand || '', model: e.model || '',
       listingPrice: e.listingPrice, erlumeCut: e.erlumeCut, sellerPayout: e.sellerPayout,
       skipLog: true, // already in the log — don't create a duplicate entry
+      logId: e.id,   // mark THIS row as quoted (attach the estimate) instead
     });
   }
 
@@ -1993,6 +2002,60 @@
       }
     });
   }
+  // Edit a logged bag's descriptive/price fields (PATCH /api/log/:id).
+  function openEditLogModal(entry) {
+    if (!entry || !entry.id) return;
+    var old = document.getElementById('edit-log-modal'); if (old) old.remove();
+    var RTL = (LANG === 'ar');
+    var INP = 'width:100%;padding:9px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;font:inherit;';
+    var LBL = 'font-size:12px;color:#666;margin:10px 0 4px;';
+    var ov = document.createElement('div');
+    ov.id = 'edit-log-modal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;';
+    function val(v) { return (v == null ? '' : String(v)).replace(/"/g, '&quot;'); }
+    ov.innerHTML =
+      '<div dir="' + (RTL ? 'rtl' : 'ltr') + '" style="background:#fff;border-radius:14px;width:420px;max-width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.25);text-align:' + (RTL ? 'right' : 'left') + ';">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<h3 style="margin:0;font-size:17px;">' + T('em.title') + '</h3>' +
+          '<button type="button" id="em-close" style="border:none;background:none;font-size:24px;cursor:pointer;color:#999;line-height:1;">&times;</button>' +
+        '</div>' +
+        '<div style="' + LBL + '">' + T('em.brand') + '</div><input type="text" id="em-brand" value="' + val(entry.brand) + '" style="' + INP + '">' +
+        '<div style="' + LBL + '">' + T('em.model') + '</div><input type="text" id="em-model" value="' + val(entry.model) + '" style="' + INP + '">' +
+        '<div style="' + LBL + '">' + T('em.size') + '</div><input type="text" id="em-size" value="' + val(entry.size) + '" style="' + INP + '">' +
+        '<div style="' + LBL + '">' + T('em.condition') + '</div><input type="text" id="em-condition" value="' + val(entry.condition) + '" style="' + INP + '">' +
+        '<div style="' + LBL + '">' + T('em.listing') + '</div><input type="number" step="0.001" id="em-listing" value="' + val(entry.listingPrice) + '" style="' + INP + '">' +
+        '<div style="' + LBL + '">' + T('em.payout') + '</div><input type="number" step="0.001" id="em-payout" value="' + val(entry.sellerPayout) + '" style="' + INP + '">' +
+        '<div style="' + LBL + '">' + T('em.notes') + '</div><input type="text" id="em-notes" value="' + val(entry.notes) + '" style="' + INP + '">' +
+        '<button type="button" id="em-save" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;background:#111;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;">' + T('em.save') + '</button>' +
+        '<div id="em-msg" style="margin-top:10px;font-size:13px;color:#b00;"></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var g = function (id) { return document.getElementById(id); };
+    var close = function () { ov.remove(); };
+    g('em-close').addEventListener('click', close);
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    g('em-save').addEventListener('click', function () {
+      var brand = g('em-brand').value.trim();
+      var model = g('em-model').value.trim();
+      if (!brand || !model) { g('em-msg').textContent = T('em.needBrandModel'); return; }
+      var patch = {
+        brand: brand, model: model,
+        size: g('em-size').value.trim(),
+        condition: g('em-condition').value.trim(),
+        notes: g('em-notes').value.trim()
+      };
+      var lp = g('em-listing').value.trim(); if (lp !== '') patch.listingPrice = Number(lp);
+      var po = g('em-payout').value.trim(); if (po !== '') patch.sellerPayout = Number(po);
+      g('em-save').disabled = true; g('em-msg').style.color = '#666'; g('em-msg').textContent = T('em.saving');
+      fetch('/api/log/' + entry.id, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch)
+      })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'update failed'); return d; }); })
+        .then(function () { close(); loadLog(); showToast(T('em.saved'), 'success'); })
+        .catch(function (e) { g('em-save').disabled = false; g('em-msg').style.color = '#b00'; g('em-msg').textContent = e.message; });
+    });
+  }
+
   function openRowMenu(btn, entry) {
     closeRowMenu();
     var rect = btn.getBoundingClientRect();
@@ -2004,9 +2067,11 @@
     var ta = (LANG === 'ar') ? 'right' : 'left';
     menu.innerHTML =
       '<button type="button" id="rm-quote" class="rm-item" style="display:block;width:100%;text-align:' + ta + ';padding:10px 14px;border:none;background:#fff;font:inherit;cursor:pointer;">' + T('rm.generateQuote') + '</button>' +
+      '<button type="button" id="rm-edit" class="rm-item" style="display:block;width:100%;text-align:' + ta + ';padding:10px 14px;border:none;border-top:1px solid #f0f0f0;background:#fff;font:inherit;cursor:pointer;">' + T('rm.edit') + '</button>' +
       '<button type="button" id="rm-delete" class="rm-item" style="display:block;width:100%;text-align:' + ta + ';padding:10px 14px;border:none;border-top:1px solid #f0f0f0;background:#fff;color:#c0392b;font:inherit;cursor:pointer;">' + T('rm.delete') + '</button>';
     document.body.appendChild(menu);
     document.getElementById('rm-quote').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); quoteFromLog(entry); });
+    document.getElementById('rm-edit').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); openEditLogModal(entry); });
     document.getElementById('rm-delete').addEventListener('click', function (e) { e.stopPropagation(); closeRowMenu(); confirmDeleteEntry(entry); });
     setTimeout(function () { document.addEventListener('click', closeRowMenu); }, 0);
   }
